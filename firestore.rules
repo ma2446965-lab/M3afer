@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
+
+    // Fields a normal user is allowed to change on their own profile.
+    // role, subscription, and subscriptionActive are deliberately excluded —
+    // only an admin (via a separate rule below) can change those.
+    function onlySelfManagedFieldsChanged() {
+      let unchangedProtectedFields =
+        request.resource.data.role == resource.data.role &&
+        request.resource.data.subscription == resource.data.subscription &&
+        request.resource.data.subscriptionActive == resource.data.subscriptionActive;
+      return unchangedProtectedFields;
+    }
+
+    match /users/{userId} {
+      // Owner can read their own profile; admin can read any profile.
+      allow read: if isOwner(userId) || isAdmin();
+
+      // Owner can create their own profile document once, on signup.
+      allow create: if isOwner(userId) &&
+        request.resource.data.role == "user" &&
+        request.resource.data.subscription == "free" &&
+        request.resource.data.subscriptionActive == false;
+
+      // Owner can update their own profile ONLY if role/subscription fields are untouched.
+      allow update: if isOwner(userId) && onlySelfManagedFieldsChanged();
+
+      // Admin can update any profile, including role/subscription (for manual upgrades).
+      allow update: if isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId}/pdfs/{pdfId} {
+      allow read, write: if isOwner(userId);
+      allow read: if isAdmin();
+    }
+
+    // Everything else (if any future collections are added): deny by default,
+    // admin only. Do NOT widen this to `allow write: if isAdmin()` covering
+    // /users/** again — that would re-open the escalation path above.
+    match /{document=**} {
+      allow read: if isAdmin();
+    }
+  }
+}
