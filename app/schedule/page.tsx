@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
-import { Booking, cancelBooking, formatSlotDate, formatTimeAr, slotDateTime } from "@/lib/booking";
+import { Booking, cancelBooking, formatSlotDate, formatTimeAr, slotDateTime, dateBadgeParts } from "@/lib/booking";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import BottomNav from "@/components/BottomNav";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { CalendarDays, CalendarPlus, Loader2, Clock, Trash2 } from "lucide-react";
 
 function daysUntil(b: Booking): number {
@@ -16,14 +17,15 @@ function daysUntil(b: Booking): number {
 
 function daysLabel(b: Booking): string {
   const d = daysUntil(b);
+  if (isNaN(d)) return "—";
   if (d <= 0) return "النهارده 🔥";
   if (d === 1) return "بكرة";
   if (d === 2) return "بعد بكرة";
   return `باقي ${d} يوم`;
 }
 
-export default function SchedulePage() {
-  const { user, loading } = useAuth();
+function SchedulePageInner() {
+  const { user, profile, loading } = useAuth();
   const router = useRouter();
 
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -38,7 +40,7 @@ export default function SchedulePage() {
 
   useEffect(() => {
     if (!user) return;
-    const q = query(collection(db, "bookings"), where("userId", "==", user.uid));
+    const q = query(collection(db, "bookings"), where("studentId", "==", user.uid));
     return onSnapshot(
       q,
       (snap) => {
@@ -111,10 +113,10 @@ export default function SchedulePage() {
             isPast ? "text-gray-500" : "text-indigo-700 dark:text-indigo-300"
           }`}
         >
-          {b.date.slice(8, 10) || "—"}
+          {dateBadgeParts(b.date).day}
         </span>
         <span className={`text-[9px] ${isPast ? "text-gray-400" : "text-indigo-500/70"}`}>
-          {b.date ? `${b.date.slice(5, 7)}/${b.date.slice(0, 4)}` : ""}
+          {dateBadgeParts(b.date).monthYear}
         </span>
       </div>
       <div className="flex-1 min-w-0">
@@ -172,6 +174,13 @@ export default function SchedulePage() {
           </p>
         )}
 
+        {profile && !profile.subscribed && (
+          <p className="text-sm p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border border-amber-100 dark:border-amber-900/30 leading-relaxed">
+            💎 اشتراكك مش فعّال حاليًا — تقدر تشوف حصصك السابقة، بس الحجز الجديد محتاج اشتراك.{" "}
+            <Link href="/subscription" className="font-bold underline">جدد الاشتراك (150 ج.م/شهر)</Link>
+          </p>
+        )}
+
         {listLoading ? (
           <div className="p-10 flex justify-center">
             <Loader2 className="animate-spin text-gray-400" />
@@ -216,5 +225,13 @@ export default function SchedulePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SchedulePage() {
+  return (
+    <ErrorBoundary label="جدولي">
+      <SchedulePageInner />
+    </ErrorBoundary>
   );
 }

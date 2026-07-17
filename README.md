@@ -42,9 +42,13 @@ Built with Next.js 14 (App Router), Firebase (Auth, Firestore, Storage), Gemini 
 - ✅ `/admin` protected route, checks role from Firestore
 - ✅ Admin can search by UUID and upgrade subscription tier
 
-### 6. Subscription & WhatsApp
-- ✅ Pricing Tiers with strike-through discounts: Basic 99EGP (200), Pro 299 (600), Premium 499 (1000)
-- ✅ WhatsApp Concierge Flow: `https://wa.me/201128182537?text=Hello,%20I%20am%20user%20[UUID]%20and%20I%20want%20to%20subscribe%20to%20the%20[PLAN]%20plan.`
+### 6. Subscription & Payments (Fatorak / Fawaterak)
+- ✅ Single plan: **150 EGP / 30 days** — subscribe button redirects to Fawaterak hosted payment page
+- ✅ `/api/fatorak/checkout` (server-only): verifies Firebase ID token, then `POST {base}/api/v2/createInvoiceLink` with `Authorization: Bearer FATORAK_MERCHANT_ID`
+- ✅ `/api/fatorak-webhook`: verifies `hashKey` (HMAC-SHA256 of `InvoiceId=..&InvoiceKey=..&PaymentMethod=..` with `FATORAK_SECRET_KEY` per official docs), then sets `users/{uid}: { subscribed: true, subscriptionStartDate, subscriptionEndDate: +30d }` — idempotent (webhook retries don't double-extend; active renewals stack)
+- ✅ Vercel Cron `/api/cron/expire-subscriptions` (daily 3 AM, `CRON_SECRET` protected): sets `subscribed: false` for expired users
+- ✅ Payment fields are locked by Firestore rules — clients can NEVER self-set `subscribed` (Admin SDK only)
+- ❌ WhatsApp payment concierge removed entirely
 
 ### 7. Env & Credentials
 - ✅ Keys in `.env.local` never hardcoded
@@ -57,8 +61,9 @@ Built with Next.js 14 (App Router), Firebase (Auth, Firestore, Storage), Gemini 
 - ✅ `firestore.rules`: `subjects` & `slots` readable by any signed-in user, **writable by admin only**, with field validation
 
 ### 9. Student Booking (/booking + /schedule)
+- ✅ Gated behind `subscribed: true` — unsubscribed students get a locked preview + "Subscribe to unlock" prompt
 - ✅ `/booking`: pick a subject → see available `slots` (only future & `bookedCount < capacity`) → one-tap booking
-- ✅ Booking = Firestore **transaction**: creates `bookings/{slotId}_{uid}` + increments `bookedCount` atomically
+- ✅ Booking = Firestore **transaction**: creates `bookings/{slotId}_{studentId}` (`studentId, slotId, subjectId, date, time, status: 'confirmed', createdAt`) + increments `bookedCount` atomically
 - ✅ Deterministic booking ID makes double-booking the same slot impossible
 - ✅ `/schedule`: "My Schedule" — my bookings sorted by date (upcoming vs past), with cancel (transaction decrement)
 - ✅ Rules enforce both sides of the transaction via `get`/`getAfter`: no count change without the matching booking write

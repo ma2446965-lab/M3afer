@@ -181,7 +181,9 @@ export default function SlotsManager() {
             </thead>
             <tbody className="divide-y dark:divide-gray-700">
               {filteredSlots.map((s) => {
-                const remaining = s.capacity - s.bookedCount;
+                const capacity = Number(s.capacity) || 0;
+                const bookedCount = Number(s.bookedCount) || 0;
+                const remaining = capacity - bookedCount;
                 return (
                   <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                     <td className="p-3 font-bold">{subjectName(s.subjectId)}</td>
@@ -189,16 +191,16 @@ export default function SlotsManager() {
                       {formatSlotDate(s.date)}
                     </td>
                     <td className="p-3 text-gray-600 dark:text-gray-300" dir="ltr">
-                      {s.time}
+                      {s.time || "—"}
                     </td>
-                    <td className="p-3">{s.capacity}</td>
-                    <td className="p-3">{s.bookedCount}</td>
+                    <td className="p-3">{capacity}</td>
+                    <td className="p-3">{bookedCount}</td>
                     <td className="p-3">
                       <span
                         className={`text-xs font-bold px-2 py-1 rounded-full ${
                           remaining <= 0
                             ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
-                            : remaining <= Math.max(1, Math.floor(s.capacity * 0.25))
+                            : remaining <= Math.max(1, Math.floor(capacity * 0.25))
                             ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
                             : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
                         }`}

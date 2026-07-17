@@ -16,14 +16,14 @@ service cloud.firestore {
     }
 
     // Fields a normal user is allowed to change on their own profile.
-    // role, subscription, and subscriptionActive are deliberately excluded —
-    // only an admin (via a separate rule below) can change those.
+    // Payment/role fields are pinned by NAME (works even when a field is
+    // absent on older docs) — role & legacy subscription tiers can only change
+    // via the admin rule below, and subscribed/subscription*Date only via the
+    // Fatorak webhook (Admin SDK) or the cron job.
     function onlySelfManagedFieldsChanged() {
-      let unchangedProtectedFields =
-        request.resource.data.role == resource.data.role &&
-        request.resource.data.subscription == resource.data.subscription &&
-        request.resource.data.subscriptionActive == resource.data.subscriptionActive;
-      return unchangedProtectedFields;
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(
+        ["role", "subscription", "subscriptionActive", "subscribed", "subscriptionStartDate", "subscriptionEndDate", "lastPayment"]
+      );
     }
 
     match /users/{userId} {
@@ -31,10 +31,13 @@ service cloud.firestore {
       allow read: if isOwner(userId) || isAdmin();
 
       // Owner can create their own profile document once, on signup.
+      // Payment fields MUST start unset/false — clients can never self-grant
+      // a subscription; only the webhook (Admin SDK) sets subscribed: true.
       allow create: if isOwner(userId) &&
         request.resource.data.role == "user" &&
         request.resource.data.subscription == "free" &&
-        request.resource.data.subscriptionActive == false;
+        request.resource.data.subscriptionActive == false &&
+        request.resource.data.subscribed == false;
 
       // Owner can update their own profile ONLY if role/subscription fields are untouched.
       allow update: if isOwner(userId) && onlySelfManagedFieldsChanged();
@@ -122,21 +125,21 @@ service cloud.firestore {
 
     function validBooking() {
       let d = request.resource.data;
-      return d.keys().hasAll(["userId", "email", "slotId", "subjectId", "subjectName", "teacherName", "date", "time", "createdAt"])
-        && d.userId == request.auth.uid
-        && d.email is string
+      return d.keys().hasAll(["studentId", "slotId", "subjectId", "subjectName", "teacherName", "date", "time", "status", "createdAt"])
+        && d.studentId == request.auth.uid
         && d.slotId is string
         && d.subjectId is string
         && d.subjectName is string
         && d.teacherName is string
         && d.date is string
         && d.time is string
+        && d.status == "confirmed"
         && d.createdAt is timestamp;
     }
 
     match /bookings/{bookingId} {
       // Students see only their own bookings; the admin sees everything.
-      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow read: if isAdmin() || (isSignedIn() && resource.data.studentId == request.auth.uid);
 
       // A booking can ONLY be created as part of the booking transaction that
       // also increments the slot's bookedCount by exactly one (checked both
@@ -152,7 +155,7 @@ service cloud.firestore {
       // any decrement, so counts can never drift downward out of sync.
       // (Deleting without decrementing is allowed — worst case a seat stays
       // marked as taken, which fails safe. Admin can fix counts in /admin.)
-      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.studentId == request.auth.uid;
 
       // Bookings are immutable for students — cancel & re-book instead.
       allow update: if isAdmin();
