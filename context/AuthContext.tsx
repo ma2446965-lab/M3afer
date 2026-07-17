@@ -14,6 +14,7 @@ export interface UserProfile {
   role: "user" | "admin";
   subscription: "free" | "basic" | "pro" | "premium";
   subscriptionActive: boolean;
+  subscriptionEndDate?: string | null;
   streak: number;
   lastActiveDate: string | null;
   weeklySubjects: string[];
@@ -61,6 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           role: "user",
           subscription: "free",
           subscriptionActive: false,
+          subscriptionEndDate: null,
           streak: 0,
           lastActiveDate: null,
           weeklySubjects: [],

@@ -49,6 +49,13 @@ Built with Next.js 14 (App Router), Firebase (Auth, Firestore, Storage), Gemini 
 ### 7. Env & Credentials
 - ✅ Keys in `.env.local` never hardcoded
 
+### 8. Admin CRUD Panel (/admin)
+- ✅ Tabbed UI, protected by `role == "admin"` check (redirects everyone else to home)
+- ✅ **Subjects** manager — Firestore `subjects: { name, description, teacherName, price, imageUrl }` — add / edit / delete in a table UI with live updates
+- ✅ **Lesson slots** manager — Firestore `slots: { subjectId, date, time, capacity, bookedCount }` — with remaining-seats indicator and per-subject filter
+- ✅ **Students** list (read-only) — every user with plan, effective subscribed status (نشط / منتهي حسب `subscriptionEndDate`), join date, plus UUID search & subscription upgrade tool
+- ✅ `firestore.rules`: `subjects` & `slots` readable by any signed-in user, **writable by admin only**, with field validation
+
 ## 🚀 Getting Started
 
 ```bash
