@@ -26,6 +26,10 @@ interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
   loading: boolean;
+  // Set when loading the Firestore profile FAILS (rules deny access, network
+  // error, missing env config...). Lets pages show an explicit error state
+  // instead of the old silent failures (endless spinner / silent redirect).
+  profileError: string | null;
   refreshProfile: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -34,6 +38,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
   loading: true,
+  profileError: null,
   refreshProfile: async () => {},
   logout: async () => {}
 });
@@ -44,8 +49,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
-  const fetchProfile = async (uid: string) => {
+  const fetchProfile = async (uid: string, emailFallback?: string | null) => {
+    setProfileError(null);
     try {
       const docRef = doc(db, "users", uid);
       const snap = await getDoc(docRef);
@@ -55,7 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Create profile if not exists (for existing auth users)
         const newProfile: UserProfile = {
           uid,
-          email: user?.email || "",
+          email: emailFallback || user?.email || "",
           uuid: uuidv4(),
           grade: null,
           track: null,
@@ -72,14 +79,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await setDoc(docRef, newProfile);
         setProfile(newProfile);
       }
-    } catch (e) {
+    } catch (e: any) {
+      // OLD BUG: this error was swallowed with console.error only, leaving
+      // profile = null forever. /admin then either redirected a legit admin
+      // to home silently, or showed "جاري التحقق..." indefinitely.
       console.error("Error fetching profile", e);
+      setProfile(null);
+      setProfileError(
+        e?.code === "permission-denied"
+          ? "Firestore رفض قراءة مستند المستخدم (permission-denied) — راجع Security Rules لمجموعة users"
+          : e?.message || "تعذر تحميل بيانات المستخدم من Firestore"
+      );
     }
   };
 
   const refreshProfile = async () => {
     if (user) {
-      await fetchProfile(user.uid);
+      await fetchProfile(user.uid, user.email);
     }
   };
 
@@ -87,19 +103,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await signOut(auth);
     setUser(null);
     setProfile(null);
+    setProfileError(null);
   };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
-        await fetchProfile(firebaseUser.uid);
+        // OLD BUG: fetchProfile used the stale `user` state for the email of
+        // newly-created profiles (state isn't updated yet inside this
+        // callback) — profiles could be created with an empty email.
+        // The email is now passed through as a parameter.
+        await fetchProfile(firebaseUser.uid, firebaseUser.email);
       } else {
         setProfile(null);
+        setProfileError(null);
       }
       setLoading(false);
     });
     return () => unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Daily streak update
@@ -111,7 +134,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         yesterday.setDate(yesterday.getDate() - 1);
         const isConsecutive = profile.lastActiveDate === yesterday.toDateString();
         const newStreak = isConsecutive ? profile.streak + 1 : 1;
-        
+
         const updateStreak = async () => {
           try {
             const docRef = doc(db, "users", user.uid);
@@ -128,10 +151,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         updateStreak();
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.lastActiveDate, user]);
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, refreshProfile, logout }}>
+    <AuthContext.Provider value={{ user, profile, loading, profileError, refreshProfile, logout }}>
       {children}
     </AuthContext.Provider>
   );

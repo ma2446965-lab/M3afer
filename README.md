@@ -56,6 +56,14 @@ Built with Next.js 14 (App Router), Firebase (Auth, Firestore, Storage), Gemini 
 - ✅ **Students** list (read-only) — every user with plan, effective subscribed status (نشط / منتهي حسب `subscriptionEndDate`), join date, plus UUID search & subscription upgrade tool
 - ✅ `firestore.rules`: `subjects` & `slots` readable by any signed-in user, **writable by admin only**, with field validation
 
+### 9. Student Booking (/booking + /schedule)
+- ✅ `/booking`: pick a subject → see available `slots` (only future & `bookedCount < capacity`) → one-tap booking
+- ✅ Booking = Firestore **transaction**: creates `bookings/{slotId}_{uid}` + increments `bookedCount` atomically
+- ✅ Deterministic booking ID makes double-booking the same slot impossible
+- ✅ `/schedule`: "My Schedule" — my bookings sorted by date (upcoming vs past), with cancel (transaction decrement)
+- ✅ Rules enforce both sides of the transaction via `get`/`getAfter`: no count change without the matching booking write
+- ✅ Nav entry points: bottom bar, hamburger menu, desktop sidebar, home CTA card
+
 ## 🚀 Getting Started
 
 ```bash

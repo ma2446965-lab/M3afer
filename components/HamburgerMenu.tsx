@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Menu, X, Moon, Sun, Languages, CreditCard, Headphones, MessageCircle, LogOut, Shield, BookOpen } from "lucide-react";
+import { Menu, X, Moon, Sun, Languages, CreditCard, Headphones, MessageCircle, LogOut, Shield, BookOpen, CalendarPlus, CalendarCheck } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
@@ -109,6 +109,26 @@ export default function HamburgerMenu() {
                 <div className="flex-1 text-right">
                   <p className="font-medium text-sm">المكتبة والملفات</p>
                   <p className="text-xs text-gray-500">كل الـ PDFs والملخصات</p>
+                </div>
+              </Link>
+
+              <Link href="/booking" onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                <div className="p-2 bg-teal-50 dark:bg-teal-900/30 rounded-lg text-teal-600 dark:text-teal-400">
+                  <CalendarPlus size={18} />
+                </div>
+                <div className="flex-1 text-right">
+                  <p className="font-medium text-sm">احجز حصتك</p>
+                  <p className="text-xs text-gray-500">مواعيد الحصص المتاحة</p>
+                </div>
+              </Link>
+
+              <Link href="/schedule" onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                <div className="p-2 bg-violet-50 dark:bg-violet-900/30 rounded-lg text-violet-600 dark:text-violet-400">
+                  <CalendarCheck size={18} />
+                </div>
+                <div className="flex-1 text-right">
+                  <p className="font-medium text-sm">جدولي</p>
+                  <p className="text-xs text-gray-500">حصصك المحجوزة بالتاريخ</p>
                 </div>
               </Link>
 

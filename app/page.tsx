@@ -7,7 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import FloatingChat from "@/components/FloatingChat";
 import OnboardingFlow from "@/components/OnboardingFlow";
-import { Flame, BookOpen, Brain, Target, Clock, Upload, Sparkles, TrendingUp } from "lucide-react";
+import { Flame, BookOpen, Brain, Target, Clock, Upload, Sparkles, TrendingUp, CalendarPlus } from "lucide-react";
 import Link from "next/link";
 
 export default function HomePage() {
@@ -142,6 +142,28 @@ export default function HomePage() {
           </div>
         </Link>
 
+        {/* Booking CTA */}
+        <Link href="/booking" className="block bg-gradient-to-br from-emerald-500 to-teal-600 rounded-[24px] p-5 text-white relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-40 h-40 bg-white/10 rounded-full blur-2xl translate-y-10 -translate-x-10 group-hover:scale-110 transition-transform" />
+          <div className="relative flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-lg flex items-center gap-2">
+                <CalendarPlus size={20} />
+                احجز حصة لايف
+              </h3>
+              <p className="text-white/80 text-sm mt-1">اختار المادة والميعاد اللي يناسبك — والتأكيد فوري</p>
+              <div className="mt-3 flex items-center gap-2 text-xs">
+                <span className="bg-white/20 px-2.5 py-1 rounded-full">مواعيد مرنة</span>
+                <span className="bg-white/20 px-2.5 py-1 rounded-full">تأكيد فوري</span>
+                <span className="bg-white/20 px-2.5 py-1 rounded-full">جدولك كله في مكان واحد</span>
+              </div>
+            </div>
+            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center group-hover:rotate-12 transition-transform">
+              <Sparkles size={20} />
+            </div>
+          </div>
+        </Link>
+
         {/* Subjects Grid */}
         <div>
           <div className="flex items-center justify-between mb-3">
@@ -187,6 +209,8 @@ export default function HomePage() {
             { href: "/", label: "الرئيسية", icon: "🏠" },
             { href: "/library", label: "المكتبة", icon: "📚" },
             { href: "/quizzes", label: "الكويزات", icon: "🧠" },
+            { href: "/booking", label: "احجز حصة", icon: "📅" },
+            { href: "/schedule", label: "جدولي", icon: "🗓️" },
             { href: "/profile", label: "حسابي", icon: "👤" },
             { href: "/subscription", label: "الاشتراك", icon: "💎" },
           ].map(item => (
