@@ -1,12 +1,13 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Library, BrainCircuit, User } from "lucide-react";
+import { Home, Library, BrainCircuit, User, CalendarPlus } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 
 const navItems = [
   { href: "/", icon: Home, labelAr: "الرئيسية", labelEn: "Home" },
   { href: "/library", icon: Library, labelAr: "المكتبة", labelEn: "Library" },
+  { href: "/booking", icon: CalendarPlus, labelAr: "احجز", labelEn: "Book" },
   { href: "/quizzes", icon: BrainCircuit, labelAr: "الكويزات", labelEn: "Quizzes" },
   { href: "/profile", icon: User, labelAr: "حسابي", labelEn: "Profile" },
 ];

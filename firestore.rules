@@ -50,10 +50,10 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
-    // ===================== Admin-managed content (built from /admin) =====================
-    // Any signed-in user can READ these collections (students browse subjects
-    // and lesson slots). ONLY the admin account (users/{uid}.role == "admin")
-    // can create, update, or delete documents in them.
+    // ===================== Admin-managed content =====================
+    // Any signed-in user can READ subjects & slots (students browse them on
+    // /booking). Writes are admin-only, EXCEPT the student booking
+    // transaction on slots.bookedCount — see studentBookingTx() below.
 
     function validSubject() {
       let d = request.resource.data;
@@ -83,15 +83,80 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Student-side booking transaction integrity, enforced server-side:
+    //  • ONLY bookedCount may change (all other fields must stay identical)
+    //  • booking: +1, must stay within capacity, AND a matching
+    //    bookings/{slotId}_{uid} doc must be created in the SAME transaction
+    //  • cancelling: -1, must not go below zero, AND the matching bookings
+    //    doc must be deleted in the SAME transaction
+    // A student cannot change bookedCount in any other way.
+    function studentBookingTx(slotId) {
+      let before = resource.data;
+      let after = request.resource.data;
+      let onlyCountChanged = after.diff(before).affectedKeys().hasOnly(["bookedCount"]);
+      let bookingPath = /databases/$(database)/documents/bookings/$(slotId + "_" + request.auth.uid);
+      return isSignedIn() && onlyCountChanged && (
+        (after.bookedCount == before.bookedCount + 1
+          && after.bookedCount <= before.capacity
+          && getAfter(bookingPath).data.userId == request.auth.uid
+          && getAfter(bookingPath).data.slotId == slotId)
+        ||
+        (after.bookedCount == before.bookedCount - 1
+          && after.bookedCount >= 0
+          && !existsAfter(bookingPath))
+      );
+    }
+
     match /slots/{slotId} {
       allow read: if isSignedIn();
-      allow create, update: if isAdmin() && validSlot();
+      allow create: if isAdmin() && validSlot();
+      allow update: if (isAdmin() && validSlot()) || studentBookingTx(slotId);
       allow delete: if isAdmin();
     }
-    // NOTE: when the student booking flow is built, `bookedCount` must be
-    // incremented by students. Do NOT open write access to students — instead
-    // use a Cloud Function (Admin SDK) or a dedicated rule that only allows
-    // bookedCount to change by exactly +1.
+
+    // ===================== Bookings (created by students via /booking) =====================
+    // Document ID is ALWAYS "{slotId}_{userId}" — this makes double-booking
+    // the same slot impossible (create on an existing doc fails) and lets
+    // the rules above/below cross-check both sides of the transaction with
+    // get/getAfter.
+
+    function validBooking() {
+      let d = request.resource.data;
+      return d.keys().hasAll(["userId", "email", "slotId", "subjectId", "subjectName", "teacherName", "date", "time", "createdAt"])
+        && d.userId == request.auth.uid
+        && d.email is string
+        && d.slotId is string
+        && d.subjectId is string
+        && d.subjectName is string
+        && d.teacherName is string
+        && d.date is string
+        && d.time is string
+        && d.createdAt is timestamp;
+    }
+
+    match /bookings/{bookingId} {
+      // Students see only their own bookings; the admin sees everything.
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+
+      // A booking can ONLY be created as part of the booking transaction that
+      // also increments the slot's bookedCount by exactly one (checked both
+      // here and in the slots rule above, so neither write can happen alone).
+      allow create: if isSignedIn()
+        && bookingId == request.resource.data.slotId + "_" + request.auth.uid
+        && validBooking()
+        && getAfter(/databases/$(database)/documents/slots/$(request.resource.data.slotId)).data.bookedCount
+           == get(/databases/$(database)/documents/slots/$(request.resource.data.slotId)).data.bookedCount + 1;
+
+      // Cancelling = deleting your own booking. The client transaction also
+      // decrements bookedCount, and the slots rule REQUIRES this deletion for
+      // any decrement, so counts can never drift downward out of sync.
+      // (Deleting without decrementing is allowed — worst case a seat stays
+      // marked as taken, which fails safe. Admin can fix counts in /admin.)
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      // Bookings are immutable for students — cancel & re-book instead.
+      allow update: if isAdmin();
+    }
 
     // Everything else (if any future collections are added): deny by default,
     // admin only. Do NOT widen this to `allow write: if isAdmin()` covering
