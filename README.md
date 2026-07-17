@@ -44,8 +44,9 @@ Built with Next.js 14 (App Router), Firebase (Auth, Firestore, Storage), Gemini 
 
 ### 6. Subscription & Payments (Fatorak / Fawaterak)
 - ✅ Single plan: **150 EGP / 30 days** — subscribe button redirects to Fawaterak hosted payment page
-- ✅ `/api/fatorak/checkout` (server-only): verifies Firebase ID token, then `POST {base}/api/v2/createInvoiceLink` with `Authorization: Bearer FATORAK_MERCHANT_ID`
-- ✅ `/api/fatorak-webhook`: verifies `hashKey` (HMAC-SHA256 of `InvoiceId=..&InvoiceKey=..&PaymentMethod=..` with `FATORAK_SECRET_KEY` per official docs), then sets `users/{uid}: { subscribed: true, subscriptionStartDate, subscriptionEndDate: +30d }` — idempotent (webhook retries don't double-extend; active renewals stack)
+- ✅ Auth to Fatorak: **OAuth 2.0 client_credentials** — `POST {base}/oauth/token` (`FATORAK_MERCHANT_ID` = client_id, `FATORAK_SECRET_KEY` = client_secret) → short-lived access token, **cached & auto-refreshed** (60s early + retry-on-401) in `lib/server/fatorak.ts`
+- ✅ `/api/fatorak/checkout` (server-only): verifies Firebase ID token, then `POST {base}/api/v2/createInvoiceLink` with `Authorization: Bearer <oauth access token>`
+- ✅ `/api/fatorak-webhook`: verifies `hashKey` = HMAC-SHA256 of `InvoiceId=..&InvoiceKey=..&PaymentMethod=..` with the vendor secret (per the published "Web Hook" docs page — re-verified; secret = `FATORAK_WEBHOOK_SECRET` if set, else `FATORAK_SECRET_KEY`), then sets `users/{uid}: { subscribed: true, subscriptionStartDate, subscriptionEndDate: +30d }` — idempotent (webhook retries don't double-extend; active renewals stack). Non-paid/expiry callbacks are ack-ignored safely
 - ✅ Vercel Cron `/api/cron/expire-subscriptions` (daily 3 AM, `CRON_SECRET` protected): sets `subscribed: false` for expired users
 - ✅ Payment fields are locked by Firestore rules — clients can NEVER self-set `subscribed` (Admin SDK only)
 - ❌ WhatsApp payment concierge removed entirely

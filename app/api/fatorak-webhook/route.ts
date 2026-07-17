@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/server/firebase-admin";
-import { verifyWebhookHashKey } from "@/lib/server/fatorak";
+import { verifyInvoiceWebhookHashKey, verifyExpiryWebhookHashKey } from "@/lib/server/fatorak";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,21 +39,32 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid body" }, { status: 400 });
   }
 
-  // Expiry/cancel webhook (fawry/aman/masary): different body shape, no state
-  // change needed on our side — acknowledge and ignore.
+  // Expiry/cancel webhook (fawry/aman/masary): different body shape + its own
+  // hash formula (referenceId & PaymentMethod, per docs). We take NO state
+  // change for these — verify the signature when present, then ack & ignore.
   if (data.referenceId && !data.invoice_id) {
+    if (data.hashKey && !verifyExpiryWebhookHashKey(data)) {
+      console.warn("Fatorak webhook: invalid expiry hashKey");
+      return NextResponse.json({ error: "invalid signature" }, { status: 401 });
+    }
     return NextResponse.json({ ok: true, ignored: "expiry webhook" });
   }
 
-  // 1) Authenticity check (hashKey = HMAC-SHA256, see lib/server/fatorak.ts)
-  if (!verifyWebhookHashKey(data)) {
-    console.warn("Fatorak webhook: invalid hashKey", { invoice_id: data?.invoice_id });
-    return NextResponse.json({ error: "invalid signature" }, { status: 401 });
-  }
-
-  // 2) We only act on successful payments (docs: invoice_status === "paid")
+  // We only mutate state on successful payments. Everything else (e.g. the
+  // documented "failed payment" webhook — whose example body has NO hashKey)
+  // is acknowledged & ignored WITHOUT signature verification, because
+  // spoofing it changes nothing on our side.
   if (data.invoice_status !== "paid") {
     return NextResponse.json({ ok: true, ignored: data.invoice_status || "not paid" });
+  }
+
+  // Authenticity check — MANDATORY on the state-changing (paid) path:
+  // hashKey = HMAC-SHA256("InvoiceId=..&InvoiceKey=..&PaymentMethod=..")
+  //             with FATORAK_SECRET_KEY (docs' "vendor key"), verified live
+  //             against the published Web Hook page.
+  if (!verifyInvoiceWebhookHashKey(data)) {
+    console.warn("Fatorak webhook: invalid hashKey", { invoice_id: data?.invoice_id });
+    return NextResponse.json({ error: "invalid signature" }, { status: 401 });
   }
 
   // 3) The uid travels in pay_load (we set it as payLoad when creating the invoice)
