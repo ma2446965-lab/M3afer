@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import BottomNav from "@/components/BottomNav";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { PLANS, type PlanId } from "@/lib/plans";
 import {
   CreditCard,
   Check,
@@ -14,14 +15,23 @@ import {
   CalendarPlus,
   Sparkles,
   AlertTriangle,
-  RefreshCw
+  RefreshCw,
+  BadgePercent,
+  Gem
 } from "lucide-react";
 
-const PLAN_FEATURES = [
+const BASE_FEATURES = [
   "حجز حصص لايف بمواعيد مرنة 📅",
   "كل أدوات المذاكرة والملخصات والكويزات",
   "مساعدا الذكاء الاصطناعي (بشمهندس محمد ود. بسملة) 🤖",
-  "تجديد شهري بسيط — 150 ج.م كل 30 يوم"
+  "فتح كل مميزات المنصة طول فترة الاشتراك"
+];
+
+// 150 ج.م × 12 شهر = 1800 → الخطة السنوية بـ 1500 توفّر 300 ج.م
+const YEARLY_FEATURES = [
+  ...BASE_FEATURES,
+  "وفّر 300 ج.م مقارنة بالتجديد الشهري (1800 ← 1500) 💰",
+  "متفكرش في التجديد طول السنة ✅"
 ];
 
 const fmtEndDate = (v?: string | null): string => {
@@ -57,7 +67,7 @@ function PaymentBanner() {
 function SubscriptionPageInner() {
   const { user, profile, loading, refreshProfile } = useAuth();
   const router = useRouter();
-  const [paying, setPaying] = useState(false);
+  const [payingPlan, setPayingPlan] = useState<PlanId | null>(null);
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
@@ -69,15 +79,19 @@ function SubscriptionPageInner() {
   const endMs = profile?.subscriptionEndDate ? new Date(profile.subscriptionEndDate).getTime() : 0;
   const stillActive = subscribed && endMs > Date.now();
 
-  const handleSubscribe = async () => {
-    if (!user || paying) return;
-    setPaying(true);
+  const handleSubscribe = async (planId: PlanId) => {
+    if (!user || payingPlan) return;
+    setPayingPlan(planId);
     setError("");
     try {
       const token = await user.getIdToken();
       const res = await fetch("/api/fatorak/checkout", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` }
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "content-type": "application/json"
+        },
+        body: JSON.stringify({ plan: planId })
       });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.url) {
@@ -86,7 +100,7 @@ function SubscriptionPageInner() {
       window.location.href = data.url;
     } catch (e: any) {
       setError(e?.message || "حصل خطأ — جرب تاني");
-      setPaying(false);
+      setPayingPlan(null);
     }
   };
 
@@ -107,6 +121,9 @@ function SubscriptionPageInner() {
     );
   }
 
+  const monthly = PLANS.monthly;
+  const yearly = PLANS.yearly;
+
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-gray-900 pb-24 md:pb-0">
       <HamburgerMenu />
@@ -119,7 +136,7 @@ function SubscriptionPageInner() {
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Crown /> الاشتراك
           </h1>
-          <p className="text-white/85 text-sm mt-1">خطة واحدة بسيطة — فتح كل حاجة • دفع آمن عبر فواترك</p>
+          <p className="text-white/85 text-sm mt-1">اختار اللي يناسبك — شهري أو سنوي • دفع آمن عبر فواترك</p>
         </div>
       </div>
 
@@ -149,7 +166,7 @@ function SubscriptionPageInner() {
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
               {stillActive
-                ? `ينتهي في ${fmtEndDate(profile?.subscriptionEndDate)} — لو جددت قبلها بتتضاف 30 يوم على نفس التاريخ`
+                ? `ينتهي في ${fmtEndDate(profile?.subscriptionEndDate)} — لو جددت بأي خطة، مدتها بتتضاف على نفس تاريخ الانتهاء`
                 : "اشترك عشان تفتح حجز الحصص وكل مميزات المنصة"}
             </p>
           </div>
@@ -163,49 +180,95 @@ function SubscriptionPageInner() {
           </button>
         </div>
 
-        {/* Plan card */}
-        <div className="relative bg-white dark:bg-gray-800 rounded-[24px] p-6 border-2 border-violet-500 shadow-[0_0_0_4px_rgba(139,92,246,0.1)]">
-          <div className="absolute -top-3 right-4 bg-violet-600 text-white text-xs font-bold px-3 py-1 rounded-full">
-            الخطة الوحيدة ✨
+        {error && (
+          <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-xl">{error}</p>
+        )}
+
+        {/* Plans grid */}
+        <div className="grid md:grid-cols-2 gap-5 items-stretch">
+          {/* Monthly — 150 EGP / 30 days */}
+          <div className="relative bg-white dark:bg-gray-800 rounded-[24px] p-6 border-2 border-gray-200 dark:border-gray-700 flex flex-col">
+            <div className="absolute -top-3 right-4 bg-gray-700 text-white text-xs font-bold px-3 py-1 rounded-full">
+              الأساسية
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-xl mb-4">
+              💎
+            </div>
+            <h3 className="font-bold text-lg">{monthly.nameAr}</h3>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-4xl font-black bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
+                {monthly.priceEgp}
+              </span>
+              <span className="text-gray-500 font-bold">ج.م / {monthly.periodAr}</span>
+            </div>
+
+            <ul className="space-y-2.5 my-5 flex-1">
+              {BASE_FEATURES.map((f) => (
+                <li key={f} className="flex items-start gap-2 text-sm">
+                  <Check size={16} className="text-green-500 mt-0.5 shrink-0" /> {f}
+                </li>
+              ))}
+            </ul>
+
+            <button
+              onClick={() => handleSubscribe("monthly")}
+              disabled={payingPlan !== null}
+              className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-95 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2"
+            >
+              {payingPlan === "monthly" ? <Loader2 size={18} className="animate-spin" /> : <CreditCard size={18} />}
+              {payingPlan === "monthly"
+                ? "بنجهز لينك الدفع..."
+                : stillActive
+                ? `جدد (+30 يوم) — ${monthly.priceEgp} ج.م`
+                : `اشترك دلوقتي — ${monthly.priceEgp} ج.م`}
+            </button>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-xl mb-4">
-            💎
+
+          {/* Yearly — 1500 EGP / 12 months */}
+          <div className="relative bg-white dark:bg-gray-800 rounded-[24px] p-6 border-2 border-amber-400 shadow-[0_0_0_4px_rgba(251,191,36,0.15)] flex flex-col">
+            <div className="absolute -top-3 right-4 bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+              <BadgePercent size={12} /> أوفر قيمة — وفّر 300 ج.م
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-xl mb-4">
+              <Gem size={22} className="text-white" />
+            </div>
+            <h3 className="font-bold text-lg">{yearly.nameAr}</h3>
+            <div className="flex items-baseline gap-2 mt-1 flex-wrap">
+              <span className="text-4xl font-black bg-gradient-to-r from-amber-500 to-orange-600 bg-clip-text text-transparent">
+                {yearly.priceEgp}
+              </span>
+              <span className="text-gray-500 font-bold">ج.م / {yearly.periodAr}</span>
+              <span className="text-xs text-gray-400 line-through">1800 ج.م</span>
+            </div>
+
+            <ul className="space-y-2.5 my-5 flex-1">
+              {YEARLY_FEATURES.map((f) => (
+                <li key={f} className="flex items-start gap-2 text-sm">
+                  <Check size={16} className="text-green-500 mt-0.5 shrink-0" /> {f}
+                </li>
+              ))}
+            </ul>
+
+            <button
+              onClick={() => handleSubscribe("yearly")}
+              disabled={payingPlan !== null}
+              className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:opacity-95 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2"
+            >
+              {payingPlan === "yearly" ? <Loader2 size={18} className="animate-spin" /> : <CreditCard size={18} />}
+              {payingPlan === "yearly"
+                ? "بنجهز لينك الدفع..."
+                : stillActive
+                ? `جدد (+365 يوم) — ${yearly.priceEgp} ج.م`
+                : `اشترك دلوقتي — ${yearly.priceEgp} ج.م`}
+            </button>
           </div>
-          <h3 className="font-bold text-lg">اشتراك مِعافر الشهري</h3>
-          <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-4xl font-black bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
-              150
-            </span>
-            <span className="text-gray-500 font-bold">ج.م / 30 يوم</span>
-          </div>
-
-          <ul className="space-y-2.5 my-5">
-            {PLAN_FEATURES.map((f) => (
-              <li key={f} className="flex items-start gap-2 text-sm">
-                <Check size={16} className="text-green-500 mt-0.5 shrink-0" /> {f}
-              </li>
-            ))}
-          </ul>
-
-          {error && (
-            <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-xl mb-3">{error}</p>
-          )}
-
-          <button
-            onClick={handleSubscribe}
-            disabled={paying}
-            className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-95 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2"
-          >
-            {paying ? <Loader2 size={18} className="animate-spin" /> : <CreditCard size={18} />}
-            {paying ? "بنجهز لينك الدفع..." : stillActive ? "جدد / مدّد الاشتراك" : "اشترك دلوقتي — 150 ج.م"}
-          </button>
-
-          <p className="text-[11px] text-center text-gray-400 mt-3 leading-relaxed">
-            هتتحول لصفحة دفع آمنة من فواترك — فيزا/ماستركارد، فوري، ميزة، والمحافظ 💳
-            <br />
-            الاشتراك بيتفعل تلقائيًا فور تأكيد الدفع (مش محتاج تكلم حد 😉)
-          </p>
         </div>
+
+        <p className="text-[11px] text-center text-gray-400 leading-relaxed">
+          هتتحول لصفحة دفع آمنة من فواترك — فيزا/ماستركارد، فوري، ميزة، والمحافظ 💳
+          <br />
+          الاشتراك بيتفعل تلقائيًا فور تأكيد الدفع (مش محتاج تكلم حد 😉)
+        </p>
 
         {/* Booking nudge for subscribers */}
         {stillActive && (

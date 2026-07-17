@@ -43,7 +43,7 @@ Built with Next.js 14 (App Router), Firebase (Auth, Firestore, Storage), Gemini 
 - ✅ Admin can search by UUID and upgrade subscription tier
 
 ### 6. Subscription & Payments (Fatorak / Fawaterak)
-- ✅ Single plan: **150 EGP / 30 days** — subscribe button redirects to Fawaterak hosted payment page
+- ✅ Two plans (see `lib/plans.ts`): **monthly 150 EGP / 30 days** and **yearly 1500 EGP / 12 months (365d)** — subscribe button redirects to Fawaterak hosted payment page; the webhook reads `pay_load.plan` to extend +30d or +365d accordingly
 - ✅ Auth to Fatorak: **OAuth 2.0 client_credentials** — `POST {base}/oauth/token` (`FATORAK_MERCHANT_ID` = client_id, `FATORAK_SECRET_KEY` = client_secret) → short-lived access token, **cached & auto-refreshed** (60s early + retry-on-401) in `lib/server/fatorak.ts`
 - ✅ `/api/fatorak/checkout` (server-only): verifies Firebase ID token, then `POST {base}/api/v2/createInvoiceLink` with `Authorization: Bearer <oauth access token>`
 - ✅ `/api/fatorak-webhook`: verifies `hashKey` = HMAC-SHA256 of `InvoiceId=..&InvoiceKey=..&PaymentMethod=..` with the vendor secret (per the published "Web Hook" docs page — re-verified; secret = `FATORAK_WEBHOOK_SECRET` if set, else `FATORAK_SECRET_KEY`), then sets `users/{uid}: { subscribed: true, subscriptionStartDate, subscriptionEndDate: +30d }` — idempotent (webhook retries don't double-extend; active renewals stack). Non-paid/expiry callbacks are ack-ignored safely

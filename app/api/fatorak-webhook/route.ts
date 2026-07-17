@@ -6,15 +6,24 @@
 // contains "_json" — that's why next.config.js rewrites
 // /api/fatorak-webhook_json -> /api/fatorak-webhook (see checkout route,
 // which passes webhookUrl with the _json suffix).
+//
+// Plan handling: the checkout route stamps payLoad = { uid, plan } when it
+// creates the invoice; Fawaterak echoes it back here as pay_load. The plan id
+// ("monthly" → +30 days, "yearly" → +365 days) decides how far the
+// subscriptionEndDate is extended (lib/plans.ts is the single source of truth).
 import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/server/firebase-admin";
 import { verifyInvoiceWebhookHashKey, verifyExpiryWebhookHashKey } from "@/lib/server/fatorak";
+import {
+  PLANS,
+  computeNewSubscriptionEnd,
+  planFromPayLoad,
+  uidFromPayLoad
+} from "@/lib/plans";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 async function parseBody(req: NextRequest): Promise<any | null> {
   const raw = await req.text();
@@ -67,15 +76,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid signature" }, { status: 401 });
   }
 
-  // 3) The uid travels in pay_load (we set it as payLoad when creating the invoice)
-  const uid: string | undefined = data.pay_load?.uid || data.payLoad?.uid;
+  // Which payment is this? pay_load = the payLoad we sent at checkout time:
+  // { uid, plan } — plan decides the extension length (+30d / +365d).
+  const rawPayLoad = data.pay_load ?? data.payLoad;
+  const uid = uidFromPayLoad(rawPayLoad);
+  const planId = planFromPayLoad(rawPayLoad);
+  const plan = PLANS[planId];
   if (!uid) {
     console.error("Fatorak webhook: paid invoice without uid", { invoice_id: data.invoice_id });
     return NextResponse.json({ error: "missing uid" }, { status: 400 });
   }
 
-  // 4) Activate/extend the subscription — idempotent: a retried webhook for
-  //    the same invoiceId must NOT extend the duration a second time.
+  // Activate/extend the subscription — idempotent: a retried webhook for the
+  // same invoiceId must NOT extend the duration a second time.
   const userRef = adminDb.doc(`users/${uid}`);
   const paymentRef = userRef.collection("payments").doc(String(data.invoice_id));
   const now = Date.now();
@@ -84,34 +97,37 @@ export async function POST(req: NextRequest) {
     const result = await adminDb.runTransaction(async (tx) => {
       const [userSnap, paymentSnap] = await Promise.all([tx.get(userRef), tx.get(paymentRef)]);
       if (paymentSnap.exists) {
-        return { duplicate: true };
+        return { duplicate: true as const };
       }
       if (!userSnap.exists) {
         throw new Error(`user ${uid} not found`);
       }
       const userData = userSnap.data() || {};
-      const currentEndMs = userData.subscriptionEndDate
-        ? new Date(userData.subscriptionEndDate).getTime()
-        : 0;
-      const currentlyActive = userData.subscribed === true && currentEndMs > now;
-      // Extend from the current end date if still active (stacked renewal),
-      // otherwise start a fresh 30-day period from now.
-      const baseMs = currentlyActive ? currentEndMs : now;
-      const newEnd = new Date(baseMs + THIRTY_DAYS_MS);
+      const { newEndMs, stacked } = computeNewSubscriptionEnd(
+        userData.subscriptionEndDate ?? null,
+        userData.subscribed === true,
+        now,
+        planId
+      );
+      const newEnd = new Date(newEndMs);
 
       tx.set(
         userRef,
         {
           subscribed: true,
-          subscriptionStartDate: currentlyActive
+          subscriptionStartDate: stacked
             ? userData.subscriptionStartDate || new Date(now).toISOString()
             : new Date(now).toISOString(),
           subscriptionEndDate: newEnd.toISOString(),
+          // Which plan the current active period came from (latest payment wins)
+          subscriptionPlan: planId,
           lastPayment: {
             invoiceId: data.invoice_id ?? null,
             invoiceKey: data.invoice_key ?? null,
             method: data.payment_method ?? null,
             referenceNumber: data.referenceNumber || null,
+            plan: planId,
+            amountEgp: plan.priceEgp,
             paidAt: new Date(now).toISOString()
           }
         },
@@ -119,7 +135,11 @@ export async function POST(req: NextRequest) {
       );
       tx.set(paymentRef, {
         uid,
-        plan: data.pay_load?.plan || data.payLoad?.plan || "monthly-150",
+        plan: planId,
+        planName: plan.nameAr,
+        amountEgp: plan.priceEgp,
+        durationDays: plan.durationDays,
+        stacked,
         invoiceId: data.invoice_id ?? null,
         invoiceKey: data.invoice_key ?? null,
         method: data.payment_method ?? null,
@@ -127,13 +147,18 @@ export async function POST(req: NextRequest) {
         paidAt: new Date(now).toISOString(),
         createdAt: FieldValue.serverTimestamp()
       });
-      return { duplicate: false, newEnd: newEnd.toISOString() };
+      return { duplicate: false as const, newEnd: newEnd.toISOString(), plan: planId, stacked };
     });
 
     if (result.duplicate) {
       return NextResponse.json({ ok: true, duplicate: true });
     }
-    return NextResponse.json({ ok: true, subscriptionEndDate: result.newEnd });
+    return NextResponse.json({
+      ok: true,
+      plan: result.plan,
+      stacked: result.stacked,
+      subscriptionEndDate: result.newEnd
+    });
   } catch (e: any) {
     console.error("Fatorak webhook: Firestore update failed", e);
     // 500 so Fawaterak retries instead of losing the payment event

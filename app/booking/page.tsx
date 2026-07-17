@@ -164,13 +164,13 @@ function BookingPageInner() {
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
                 عشان تحجز مكانك في الحصص اللايف لازم يكون اشتراكك فعّال
                 <br />
-                اشترك بـ <b>150 ج.م</b> في الشهر وافتح كل المواعيد 👇
+                اشترك ابتداءً من <b>150 ج.م/شهر</b> وافتح كل المواعيد 👇
               </p>
               <button
                 onClick={() => router.push("/subscription")}
                 className="mt-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-95 text-white font-bold px-8 py-3 rounded-xl inline-flex items-center gap-2"
               >
-                <Crown size={18} /> اشترك وافتح الحجز — 150 ج.م/شهر
+                <Crown size={18} /> اشترك وافتح الحجز — من 150 ج.م/شهر
               </button>
             </div>
 
