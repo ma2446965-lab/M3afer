@@ -50,6 +50,49 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
+    // ===================== Admin-managed content (built from /admin) =====================
+    // Any signed-in user can READ these collections (students browse subjects
+    // and lesson slots). ONLY the admin account (users/{uid}.role == "admin")
+    // can create, update, or delete documents in them.
+
+    function validSubject() {
+      let d = request.resource.data;
+      return d.keys().hasAll(["name", "description", "teacherName", "price", "imageUrl"])
+        && d.name is string
+        && d.description is string
+        && d.teacherName is string
+        && d.price is number
+        && d.imageUrl is string;
+    }
+
+    function validSlot() {
+      let d = request.resource.data;
+      return d.keys().hasAll(["subjectId", "date", "time", "capacity", "bookedCount"])
+        && d.subjectId is string
+        && d.date is string
+        && d.time is string
+        && d.capacity is number
+        && d.bookedCount is number
+        && d.bookedCount >= 0
+        && d.bookedCount <= d.capacity;
+    }
+
+    match /subjects/{subjectId} {
+      allow read: if isSignedIn();
+      allow create, update: if isAdmin() && validSubject();
+      allow delete: if isAdmin();
+    }
+
+    match /slots/{slotId} {
+      allow read: if isSignedIn();
+      allow create, update: if isAdmin() && validSlot();
+      allow delete: if isAdmin();
+    }
+    // NOTE: when the student booking flow is built, `bookedCount` must be
+    // incremented by students. Do NOT open write access to students — instead
+    // use a Cloud Function (Admin SDK) or a dedicated rule that only allows
+    // bookedCount to change by exactly +1.
+
     // Everything else (if any future collections are added): deny by default,
     // admin only. Do NOT widen this to `allow write: if isAdmin()` covering
     // /users/** again — that would re-open the escalation path above.
