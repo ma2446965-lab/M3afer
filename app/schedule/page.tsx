@@ -177,7 +177,7 @@ function SchedulePageInner() {
         {profile && !profile.subscribed && (
           <p className="text-sm p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border border-amber-100 dark:border-amber-900/30 leading-relaxed">
             💎 اشتراكك مش فعّال حاليًا — تقدر تشوف حصصك السابقة، بس الحجز الجديد محتاج اشتراك.{" "}
-            <Link href="/subscription" className="font-bold underline">جدد الاشتراك (150 ج.م/شهر)</Link>
+            <Link href="/subscription" className="font-bold underline">جدد الاشتراك (من 150 ج.م/شهر)</Link>
           </p>
         )}
 
