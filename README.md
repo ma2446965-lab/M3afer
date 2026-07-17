@@ -49,7 +49,7 @@ Built with Next.js 14 (App Router), Firebase (Auth, Firestore, Storage), Gemini 
 - ✅ `/api/fatorak-webhook`: verifies `hashKey` = HMAC-SHA256 of `InvoiceId=..&InvoiceKey=..&PaymentMethod=..` with the vendor secret (per the published "Web Hook" docs page — re-verified; secret = `FATORAK_WEBHOOK_SECRET` if set, else `FATORAK_SECRET_KEY`), then sets `users/{uid}: { subscribed: true, subscriptionStartDate, subscriptionEndDate: +30d }` — idempotent (webhook retries don't double-extend; active renewals stack). Non-paid/expiry callbacks are ack-ignored safely
 - ✅ Vercel Cron `/api/cron/expire-subscriptions` (daily 3 AM, `CRON_SECRET` protected): sets `subscribed: false` for expired users
 - ✅ Payment fields are locked by Firestore rules — clients can NEVER self-set `subscribed` (Admin SDK only)
-- ❌ WhatsApp payment concierge removed entirely
+- ❌ Legacy manual/chat-based payment concierge removed entirely — checkout is fully automated
 
 ### 7. Env & Credentials
 - ✅ Keys in `.env.local` never hardcoded

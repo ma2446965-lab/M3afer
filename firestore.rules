@@ -137,14 +137,24 @@ service cloud.firestore {
         && d.createdAt is timestamp;
     }
 
+    // A paid subscriber: the Fatorak webhook (Admin SDK) is the ONLY writer
+    // of `subscribed` — clients are blocked by onlySelfManagedFieldsChanged(),
+    // so trusting this flag here is safe. Expiry is flipped by the cron job.
+    function isSubscriber() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.subscribed == true;
+    }
+
     match /bookings/{bookingId} {
       // Students see only their own bookings; the admin sees everything.
       allow read: if isAdmin() || (isSignedIn() && resource.data.studentId == request.auth.uid);
 
       // A booking can ONLY be created as part of the booking transaction that
       // also increments the slot's bookedCount by exactly one (checked both
-      // here and in the slots rule above, so neither write can happen alone).
-      allow create: if isSignedIn()
+      // here and in the slots rule above, so neither write can happen alone) —
+      // AND the caller must be a paid subscriber (or the admin). Unsubscribed
+      // students cannot book even by calling the Firestore API directly.
+      allow create: if (isAdmin() || isSubscriber())
         && bookingId == request.resource.data.slotId + "_" + request.auth.uid
         && validBooking()
         && getAfter(/databases/$(database)/documents/slots/$(request.resource.data.slotId)).data.bookedCount
