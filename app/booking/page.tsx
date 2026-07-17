@@ -11,13 +11,15 @@ import {
   bookSlot,
   formatSlotDate,
   formatTimeAr,
-  slotDateTime
+  slotDateTime,
+  dateBadgeParts
 } from "@/lib/booking";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import BottomNav from "@/components/BottomNav";
-import { CalendarPlus, Loader2, Users, ArrowRight, CheckCircle2, Clock } from "lucide-react";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { CalendarPlus, Loader2, Users, ArrowRight, CheckCircle2, Clock, Lock, Crown } from "lucide-react";
 
-export default function BookingPage() {
+function BookingPageInner() {
   const { user, profile, loading } = useAuth();
   const router = useRouter();
 
@@ -65,7 +67,7 @@ export default function BookingPage() {
   // My bookings → mark slots I already booked
   useEffect(() => {
     if (!user) return;
-    const q = query(collection(db, "bookings"), where("userId", "==", user.uid));
+    const q = query(collection(db, "bookings"), where("studentId", "==", user.uid));
     return onSnapshot(
       q,
       (snap) => setMySlotIds(new Set(snap.docs.map((d) => d.data().slotId as string))),
@@ -75,7 +77,7 @@ export default function BookingPage() {
 
   const isAvailable = (s: LessonSlot) => {
     const dt = slotDateTime(s);
-    return (s.bookedCount ?? 0) < s.capacity && !isNaN(+dt) && dt > new Date();
+    return (Number(s.bookedCount) || 0) < (Number(s.capacity) || 0) && !isNaN(+dt) && dt > new Date();
   };
 
   // Slots of the selected subject: future + not full, soonest first
@@ -98,8 +100,7 @@ export default function BookingPage() {
       await bookSlot({
         slot,
         subject: selected,
-        userId: user.uid,
-        email: user.email || profile?.email || ""
+        studentId: user.uid
       });
       setNotice(
         `✅ تمام يا بطل! حجزت ${selected.name} — ${formatSlotDate(slot.date)} الساعة ${formatTimeAr(slot.time)}. هتلاقيها في "جدولي" من القايمة.`
@@ -148,7 +149,63 @@ export default function BookingPage() {
           </p>
         )}
 
-        {!selected ? (
+        {/* ===== Subscription gate: booking flow is for paid subscribers only ===== */}
+        {!profile ? (
+          <div className="p-10 flex justify-center">
+            <Loader2 className="animate-spin text-gray-400" />
+          </div>
+        ) : !profile.subscribed ? (
+          <section className="space-y-5">
+            <div className="bg-white dark:bg-gray-800 rounded-[24px] border-2 border-violet-200 dark:border-violet-800 p-6 text-center">
+              <div className="w-14 h-14 mx-auto bg-violet-100 dark:bg-violet-900/30 rounded-2xl flex items-center justify-center text-violet-600 dark:text-violet-300">
+                <Lock size={26} />
+              </div>
+              <h2 className="font-bold text-lg mt-3">حجز الحصص للمشتركين بس 🔒</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                عشان تحجز مكانك في الحصص اللايف لازم يكون اشتراكك فعّال
+                <br />
+                اشترك بـ <b>150 ج.م</b> في الشهر وافتح كل المواعيد 👇
+              </p>
+              <button
+                onClick={() => router.push("/subscription")}
+                className="mt-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-95 text-white font-bold px-8 py-3 rounded-xl inline-flex items-center gap-2"
+              >
+                <Crown size={18} /> اشترك وافتح الحجز — 150 ج.م/شهر
+              </button>
+            </div>
+
+            {/* Locked preview of available subjects */}
+            {!dataLoading && subjects.length > 0 && (
+              <div>
+                <p className="text-xs font-bold text-gray-400 mb-2">معاينة المواد المتاحة (مقفولة👇):</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 opacity-60 pointer-events-none select-none">
+                  {subjects.slice(0, 6).map((s) => (
+                    <div
+                      key={s.id}
+                      className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden"
+                    >
+                      {s.imageUrl ? (
+                        <img src={s.imageUrl} alt="" className="w-full h-20 object-cover bg-gray-100 dark:bg-gray-700" />
+                      ) : (
+                        <div className="w-full h-20 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center text-3xl">
+                          📚
+                        </div>
+                      )}
+                      <div className="p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <h3 className="font-bold text-sm">{s.name}</h3>
+                          <Lock size={14} className="text-gray-300" />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5">👨‍🏫 {s.teacherName}</p>
+                        <p className="text-xs text-gray-400 mt-1">{availableCountFor(s.id)} مواعيد متاحة</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        ) : !selected ? (
           <>
             <h2 className="font-bold text-lg">١) اختار المادة</h2>
             {dataLoading ? (
@@ -245,10 +302,10 @@ export default function BookingPage() {
                     >
                       <div className="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex flex-col items-center justify-center shrink-0">
                         <span className="text-sm font-black text-emerald-700 dark:text-emerald-300 leading-none">
-                          {slot.date.slice(8, 10)}
+                          {dateBadgeParts(slot.date).day}
                         </span>
                         <span className="text-[9px] text-emerald-600/70 dark:text-emerald-400/70">
-                          {slot.date.slice(5, 7)}/{slot.date.slice(0, 4)}
+                          {dateBadgeParts(slot.date).monthYear}
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
@@ -293,5 +350,13 @@ export default function BookingPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function BookingPage() {
+  return (
+    <ErrorBoundary label="صفحة الحجز">
+      <BookingPageInner />
+    </ErrorBoundary>
   );
 }

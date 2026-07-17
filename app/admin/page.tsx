@@ -6,6 +6,7 @@ import { Shield, BookOpen, CalendarDays, GraduationCap, Loader2, AlertTriangle, 
 import SubjectsManager from "@/components/admin/SubjectsManager";
 import SlotsManager from "@/components/admin/SlotsManager";
 import StudentsManager from "@/components/admin/StudentsManager";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 type Tab = "subjects" | "slots" | "students";
 
@@ -23,7 +24,7 @@ function FullScreenState({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function AdminPage() {
+function AdminPageInner() {
   const { profile, user, loading, profileError, refreshProfile } = useAuth();
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("subjects");
@@ -144,7 +145,7 @@ export default function AdminPage() {
             إدارة المواد والمواعيد والطلاب • محمية بـ role === &quot;admin&quot; في Firestore + Security Rules
           </p>
           <p className="text-xs bg-white/20 inline-block px-2 py-1 rounded-full mt-3">
-            أنت: {profile.email} • {profile.uuid}
+            أنت: {profile.email} • {profile.uuid ? profile.uuid.slice(0, 8) + "…" : "—"}
           </p>
         </div>
 
@@ -184,5 +185,13 @@ export default function AdminPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <ErrorBoundary label="لوحة الأدمن">
+      <AdminPageInner />
+    </ErrorBoundary>
   );
 }

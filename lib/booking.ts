@@ -34,15 +34,15 @@ export interface LessonSlot extends SlotInput {
 }
 
 export interface Booking {
-  id: string; // `${slotId}_${userId}` — also prevents double-booking
-  userId: string;
-  email: string;
+  id: string; // `${slotId}_${studentId}` — also prevents double-booking
+  studentId: string;
   slotId: string;
   subjectId: string;
   subjectName: string;
   teacherName: string;
   date: string;
   time: string;
+  status: "confirmed";
   createdAt?: any;
 }
 
@@ -84,7 +84,15 @@ export function formatTimeAr(time: string): string {
 
 // Local Date for a slot/booking; NaN date if unparsable
 export function slotDateTime(s: { date: string; time: string }): Date {
+  if (!s.date || typeof s.date !== "string") return new Date(NaN);
   return new Date(`${s.date}T${s.time || "00:00"}:00`);
+}
+
+// Safe extraction of "DD" + "MM/YYYY" from a "YYYY-MM-DD" string.
+// Never throws on missing/malformed dates (older docs) — returns "—".
+export function dateBadgeParts(date?: string): { day: string; monthYear: string } {
+  if (typeof date !== "string" || date.length < 10) return { day: "—", monthYear: "" };
+  return { day: date.slice(8, 10), monthYear: `${date.slice(5, 7)}/${date.slice(0, 4)}` };
 }
 
 export function bookingIdFor(slotId: string, userId: string): string {
@@ -93,18 +101,18 @@ export function bookingIdFor(slotId: string, userId: string): string {
 
 // ----------------------------------------------------- booking transactions
 
-// Books a slot: creates bookings/{slotId}_{userId} AND increments
-// slots.bookedCount atomically. Firestore Security Rules enforce both sides
-// of this transaction (see firestore.rules) so counts can't drift.
+// Books a slot: creates bookings/{slotId}_{studentId} AND increments
+// slots.bookedCount atomically via a Firestore TRANSACTION — never a plain
+// write — so two students racing for the last seat can't oversell the slot.
+// Firestore Security Rules enforce both sides of this transaction.
 export async function bookSlot(opts: {
   slot: LessonSlot;
   subject: Subject;
-  userId: string;
-  email: string;
+  studentId: string;
 }): Promise<void> {
-  const { slot, subject, userId, email } = opts;
+  const { slot, subject, studentId } = opts;
   const slotRef = doc(db, "slots", slot.id);
-  const bookingRef = doc(db, "bookings", bookingIdFor(slot.id, userId));
+  const bookingRef = doc(db, "bookings", bookingIdFor(slot.id, studentId));
 
   await runTransaction(db, async (tx) => {
     // All reads happen BEFORE any write (transaction requirement)
@@ -117,22 +125,22 @@ export async function bookSlot(opts: {
     if (bookingSnap.exists()) throw new Error("أنت حاجز الميعاد ده بالفعل ✅");
 
     const data = slotSnap.data();
-    const bookedCount = data.bookedCount ?? 0;
-    const capacity = data.capacity ?? 0;
+    const bookedCount = Number(data.bookedCount) || 0;
+    const capacity = Number(data.capacity) || 0;
     if (bookedCount >= capacity) {
       throw new Error("الميعاد كمل العدد 😅 — جرب ميعاد تاني");
     }
 
     tx.update(slotRef, { bookedCount: bookedCount + 1 });
     tx.set(bookingRef, {
-      userId,
-      email,
+      studentId,
       slotId: slot.id,
       subjectId: subject.id,
       subjectName: subject.name,
       teacherName: subject.teacherName,
       date: slot.date,
       time: slot.time,
+      status: "confirmed",
       createdAt: serverTimestamp()
     });
   });
@@ -149,7 +157,7 @@ export async function cancelBooking(b: Booking): Promise<void> {
     const slotSnap = await tx.get(slotRef);
     tx.delete(bookingRef);
     if (slotSnap.exists()) {
-      const current = slotSnap.data().bookedCount ?? 0;
+      const current = Number(slotSnap.data().bookedCount) || 0;
       if (current > 0) {
         tx.update(slotRef, { bookedCount: current - 1 });
       }

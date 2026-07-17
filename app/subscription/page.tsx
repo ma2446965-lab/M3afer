@@ -1,166 +1,234 @@
 "use client";
+import { Suspense, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import BottomNav from "@/components/BottomNav";
+import { useRouter, useSearchParams } from "next/navigation";
 import HamburgerMenu from "@/components/HamburgerMenu";
-import { Check, Crown, Zap, Star, MessageCircle } from "lucide-react";
+import BottomNav from "@/components/BottomNav";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import {
+  CreditCard,
+  Check,
+  Loader2,
+  Crown,
+  ShieldCheck,
+  CalendarPlus,
+  Sparkles,
+  AlertTriangle,
+  RefreshCw
+} from "lucide-react";
 
-const plans = [
-  {
-    id: "basic",
-    name: "Basic Plan",
-    nameAr: "الباقة الأساسية",
-    price: 99,
-    originalPrice: 200,
-    features: [
-      "5 ملفات PDF شهرياً",
-      "ملخصات أساسية بأسلوب المراجعة النهائية",
-      "دعم عبر واتساب",
-      "وصول للمكتبة",
-    ],
-    icon: "📚",
-    color: "from-gray-600 to-gray-800",
-    popular: false,
-  },
-  {
-    id: "pro",
-    name: "Pro Plan",
-    nameAr: "الباقة الاحترافية",
-    price: 299,
-    originalPrice: 600,
-    features: [
-      "20 ملف PDF شهرياً",
-      "كل مميزات الأساسية",
-      "فلاش كاردز ذكية",
-      "كويزات غير محدودة بنظام الوزارة",
-      "محادثة متقدمة مع AI (ing.Mohamed & Dr.Basmala)",
-      "تتبع streak يومي",
-    ],
-    icon: "🚀",
-    color: "from-violet-600 to-indigo-600",
-    popular: true,
-  },
-  {
-    id: "premium",
-    name: "Premium Plan",
-    nameAr: "الباقة المميزة VIP",
-    price: 499,
-    originalPrice: 1000,
-    features: [
-      "ملفات غير محدودة ♾️",
-      "كل مميزات Pro",
-      "ميزة NotebookLM الصوتية 🔊 (سكريبت بودكاست + TTS قريباً)",
-      "دعم VIP فوري",
-      "أولوية في توليد المحتوى",
-      "مراجعة نهائية AI مخصصة لكل مادة",
-    ],
-    icon: "👑",
-    color: "from-amber-500 to-orange-600",
-    popular: false,
-  },
+const PLAN_FEATURES = [
+  "حجز حصص لايف بمواعيد مرنة 📅",
+  "كل أدوات المذاكرة والملخصات والكويزات",
+  "مساعدا الذكاء الاصطناعي (بشمهندس محمد ود. بسملة) 🤖",
+  "تجديد شهري بسيط — 150 ج.م كل 30 يوم"
 ];
 
-export default function SubscriptionPage() {
-  const { profile } = useAuth();
+const fmtEndDate = (v?: string | null): string => {
+  if (!v) return "—";
+  const d = new Date(v);
+  if (isNaN(+d)) return "—";
+  return d.toLocaleDateString("ar-EG", { day: "numeric", month: "long", year: "numeric" });
+};
 
-  const handleSubscribe = (planName: string) => {
-    const uuid = profile?.uuid || "UNKNOWN_UUID";
-    const message = `Hello, I am user ${uuid} and I want to subscribe to the ${planName} plan.`;
-    const encoded = encodeURIComponent(message);
-    const waUrl = `https://wa.me/201128182537?text=${encoded}`;
-    window.open(waUrl, "_blank");
+function PaymentBanner() {
+  const params = useSearchParams();
+  const state = params.get("payment");
+  if (!state) return null;
+  const map: Record<string, { text: string; cls: string }> = {
+    success: {
+      text: "✅ الدفع تم بنجاح! اشتراكك مفعّل — يلا نحجز أول حصة 🎉",
+      cls: "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-100 dark:border-green-900/30"
+    },
+    pending: {
+      text: "⏳ استلمنا طلبك — أكمل الدفع بالطريقة اللي اخترتها (فوري/محفظة) وهيتفعل الاشتراك تلقائيًا أول ما الدفع يتأكد.",
+      cls: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-100 dark:border-amber-900/30"
+    },
+    failed: {
+      text: "❌ الدفع ما تمش. جرب تاني أو استخدم وسيلة دفع مختلفة.",
+      cls: "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 border-red-100 dark:border-red-900/30"
+    }
+  };
+  const item = map[state];
+  if (!item) return null;
+  return <p className={`text-sm p-3 rounded-xl border leading-relaxed ${item.cls}`}>{item.text}</p>;
+}
+
+function SubscriptionPageInner() {
+  const { user, profile, loading, refreshProfile } = useAuth();
+  const router = useRouter();
+  const [paying, setPaying] = useState(false);
+  const [error, setError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    if (!loading && !user) router.replace("/auth/login");
+  }, [loading, user, router]);
+
+  const subscribed = profile?.subscribed === true;
+  const endMs = profile?.subscriptionEndDate ? new Date(profile.subscriptionEndDate).getTime() : 0;
+  const stillActive = subscribed && endMs > Date.now();
+
+  const handleSubscribe = async () => {
+    if (!user || paying) return;
+    setPaying(true);
+    setError("");
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch("/api/fatorak/checkout", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.url) {
+        throw new Error(data?.error || "تعذر إنشاء رابط الدفع");
+      }
+      window.location.href = data.url;
+    } catch (e: any) {
+      setError(e?.message || "حصل خطأ — جرب تاني");
+      setPaying(false);
+    }
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refreshProfile();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] dark:bg-gray-900">
+        <Loader2 className="animate-spin text-violet-500" size={32} />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#f8fafc] dark:bg-gray-900 pb-24">
+    <div className="min-h-screen bg-[#f8fafc] dark:bg-gray-900 pb-24 md:pb-0">
       <HamburgerMenu />
       <BottomNav />
 
-      <div className="max-w-5xl mx-auto p-4 pt-16">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-black">خطط الاشتراك 💎</h1>
-          <p className="text-gray-500 text-sm mt-2">اختار الباقة اللي تناسبك - الدفع عبر واتساب بسهولة</p>
-          {profile && (
-            <div className="mt-4 inline-flex items-center gap-2 bg-white dark:bg-gray-800 border px-3 py-1.5 rounded-full text-xs">
-              <span className="text-gray-500">UUID:</span>
-              <span className="font-mono font-bold">{profile.uuid.slice(0, 8)}...</span>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] ${profile.subscriptionActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
-                {profile.subscription} {profile.subscriptionActive ? "• Active" : ""}
-              </span>
-            </div>
-          )}
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-5">
-          {plans.map((plan) => (
-            <div key={plan.id} className={`relative bg-white dark:bg-gray-800 rounded-[24px] p-6 border-2 flex flex-col ${plan.popular ? "border-violet-500 shadow-[0_0_0_4px_rgba(139,92,246,0.1)] scale-[1.02]" : "border-gray-100 dark:border-gray-700"}`}>
-              {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-[11px] px-3 py-1 rounded-full font-bold flex items-center gap-1">
-                  <Star size={12} /> الأكثر شعبية
-                </div>
-              )}
-
-              <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${plan.color} flex items-center justify-center text-xl mb-4`}>
-                {plan.icon}
-              </div>
-
-              <h3 className="font-bold text-lg">{plan.nameAr}</h3>
-              <p className="text-xs text-gray-500">{plan.name}</p>
-
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-3xl font-black">{plan.price}</span>
-                <span className="text-sm">EGP</span>
-                <span className="text-sm text-gray-400 line-through">{plan.originalPrice} EGP</span>
-              </div>
-              <p className="text-[11px] text-green-600 font-medium mt-1">وفر {plan.originalPrice - plan.price} جنيه! 🔥 خصم {Math.round(((plan.originalPrice - plan.price)/plan.originalPrice)*100)}%</p>
-
-              <div className="mt-6 space-y-2.5 flex-1">
-                {plan.features.map((feat, i) => (
-                  <div key={i} className="flex gap-2 text-sm">
-                    <div className="w-5 h-5 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-                      <Check size={12} className="text-green-600" />
-                    </div>
-                    <span className="text-gray-700 dark:text-gray-300 text-[13px]">{feat}</span>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={() => handleSubscribe(plan.name)}
-                className={`mt-6 w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition hover:scale-[1.02] ${
-                  plan.popular
-                    ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/25"
-                    : plan.id === "premium"
-                    ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/25"
-                    : "bg-gray-900 dark:bg-white dark:text-gray-900 text-white"
-                }`}
-              >
-                <MessageCircle size={18} />
-                اشترك عبر واتساب
-              </button>
-
-              <p className="text-[10px] text-center text-gray-400 mt-3">سيتم تحويلك لواتساب مع رقمك المميز تلقائياً</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-10 bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700">
-          <h3 className="font-bold flex items-center gap-2"><Zap size={18} className="text-amber-500" /> إزاي الاشتراك بيشتغل؟</h3>
-          <div className="mt-4 grid md:grid-cols-3 gap-4 text-sm">
-            <div className="flex gap-3">
-              <div className="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center font-bold text-indigo-600 shrink-0">1</div>
-              <p className="text-gray-600 dark:text-gray-400">بتدوس "اشترك عبر واتساب" وهيتم تحويلك مباشرة لرقم الدعم مع رسالة فيها UUID واسم الباقة تلقائياً</p>
-            </div>
-            <div className="flex gap-3">
-              <div className="w-8 h-8 bg-violet-100 dark:bg-violet-900/30 rounded-full flex items-center justify-center font-bold text-violet-600 shrink-0">2</div>
-              <p className="text-gray-600 dark:text-gray-400">فريقنا بيرد عليك في دقايق، بتدفع فودافون كاش / انستا باي، وبيفعلولك الباقة يدوياً</p>
-            </div>
-            <div className="flex gap-3">
-              <div className="w-8 h-8 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center font-bold text-amber-600 shrink-0">3</div>
-              <p className="text-gray-600 dark:text-gray-400">الأدمن بيبحث بـ UUID بتاعك في لوحة التحكم وبيفعل الاشتراك فوراً • role-based admin system</p>
-            </div>
-          </div>
+      {/* Header */}
+      <div className="bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 text-white p-6 pt-16 pb-8 rounded-b-[32px] relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full blur-3xl -translate-y-20 translate-x-20" />
+        <div className="relative max-w-5xl mx-auto">
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Crown /> الاشتراك
+          </h1>
+          <p className="text-white/85 text-sm mt-1">خطة واحدة بسيطة — فتح كل حاجة • دفع آمن عبر فواترك</p>
         </div>
       </div>
+
+      <div className="max-w-3xl mx-auto p-4 space-y-5 -mt-2">
+        <Suspense fallback={null}>
+          <PaymentBanner />
+        </Suspense>
+
+        {/* Current status */}
+        <div
+          className={`rounded-2xl p-5 border-2 flex items-center gap-4 ${
+            stillActive
+              ? "bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800"
+              : "bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700"
+          }`}
+        >
+          <div
+            className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
+              stillActive ? "bg-green-100 dark:bg-green-900/30 text-green-600" : "bg-gray-100 dark:bg-gray-700 text-gray-400"
+            }`}
+          >
+            {stillActive ? <ShieldCheck size={24} /> : <AlertTriangle size={24} />}
+          </div>
+          <div className="flex-1">
+            <p className="font-bold">
+              {stillActive ? "اشتراكك فعّال ✅" : "أنت غير مشترك حاليًا"}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              {stillActive
+                ? `ينتهي في ${fmtEndDate(profile?.subscriptionEndDate)} — لو جددت قبلها بتتضاف 30 يوم على نفس التاريخ`
+                : "اشترك عشان تفتح حجز الحصص وكل مميزات المنصة"}
+            </p>
+          </div>
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="p-2.5 rounded-xl bg-white/70 dark:bg-gray-700 border dark:border-gray-600 text-gray-500 disabled:opacity-50"
+            title="تحديث الحالة"
+          >
+            {refreshing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+          </button>
+        </div>
+
+        {/* Plan card */}
+        <div className="relative bg-white dark:bg-gray-800 rounded-[24px] p-6 border-2 border-violet-500 shadow-[0_0_0_4px_rgba(139,92,246,0.1)]">
+          <div className="absolute -top-3 right-4 bg-violet-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+            الخطة الوحيدة ✨
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-xl mb-4">
+            💎
+          </div>
+          <h3 className="font-bold text-lg">اشتراك مِعافر الشهري</h3>
+          <div className="flex items-baseline gap-2 mt-1">
+            <span className="text-4xl font-black bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
+              150
+            </span>
+            <span className="text-gray-500 font-bold">ج.م / 30 يوم</span>
+          </div>
+
+          <ul className="space-y-2.5 my-5">
+            {PLAN_FEATURES.map((f) => (
+              <li key={f} className="flex items-start gap-2 text-sm">
+                <Check size={16} className="text-green-500 mt-0.5 shrink-0" /> {f}
+              </li>
+            ))}
+          </ul>
+
+          {error && (
+            <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-xl mb-3">{error}</p>
+          )}
+
+          <button
+            onClick={handleSubscribe}
+            disabled={paying}
+            className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-95 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2"
+          >
+            {paying ? <Loader2 size={18} className="animate-spin" /> : <CreditCard size={18} />}
+            {paying ? "بنجهز لينك الدفع..." : stillActive ? "جدد / مدّد الاشتراك" : "اشترك دلوقتي — 150 ج.م"}
+          </button>
+
+          <p className="text-[11px] text-center text-gray-400 mt-3 leading-relaxed">
+            هتتحول لصفحة دفع آمنة من فواترك — فيزا/ماستركارد، فوري، ميزة، والمحافظ 💳
+            <br />
+            الاشتراك بيتفعل تلقائيًا فور تأكيد الدفع (مش محتاج تكلم حد 😉)
+          </p>
+        </div>
+
+        {/* Booking nudge for subscribers */}
+        {stillActive && (
+          <button
+            onClick={() => router.push("/booking")}
+            className="w-full bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-4 text-white flex items-center justify-center gap-2 font-bold"
+          >
+            احجز حصتك الجاية <CalendarPlus size={18} />
+          </button>
+        )}
+
+        <p className="text-xs text-gray-400 text-center flex items-center justify-center gap-1">
+          <Sparkles size={14} /> أي مشكلة في الدفع؟ تواصل مع الدعم الفني من القائمة الجانبية
+        </p>
+      </div>
     </div>
+  );
+}
+
+export default function SubscriptionPage() {
+  return (
+    <ErrorBoundary label="صفحة الاشتراك">
+      <SubscriptionPageInner />
+    </ErrorBoundary>
   );
 }

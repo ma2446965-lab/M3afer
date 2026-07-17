@@ -14,6 +14,9 @@ export interface UserProfile {
   role: "user" | "admin";
   subscription: "free" | "basic" | "pro" | "premium";
   subscriptionActive: boolean;
+  /** New canonical paid flag — set automatically by the Fatorak webhook */
+  subscribed?: boolean;
+  subscriptionStartDate?: string | null;
   subscriptionEndDate?: string | null;
   streak: number;
   lastActiveDate: string | null;
@@ -69,6 +72,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           role: "user",
           subscription: "free",
           subscriptionActive: false,
+          subscribed: false,
+          subscriptionStartDate: null,
           subscriptionEndDate: null,
           streak: 0,
           lastActiveDate: null,

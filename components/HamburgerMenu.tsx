@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Menu, X, Moon, Sun, Languages, CreditCard, Headphones, MessageCircle, LogOut, Shield, BookOpen, CalendarPlus, CalendarCheck } from "lucide-react";
+import { Menu, X, Moon, Sun, Languages, CreditCard, MessageCircle, LogOut, Shield, BookOpen, CalendarPlus, CalendarCheck } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
@@ -97,8 +97,8 @@ export default function HamburgerMenu() {
                   <CreditCard size={18} />
                 </div>
                 <div className="flex-1 text-right">
-                  <p className="font-medium text-sm">خطط الاشتراك</p>
-                  <p className="text-xs text-gray-500">Basic • Pro • Premium</p>
+                  <p className="font-medium text-sm">الاشتراك الشهري</p>
+                  <p className="text-xs text-gray-500">150 ج.م — فتح كل المميزات ✨</p>
                 </div>
               </Link>
 
@@ -143,16 +143,6 @@ export default function HamburgerMenu() {
                   </div>
                 </Link>
               )}
-
-              <a href="https://wa.me/201128182537" target="_blank" className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-                <div className="p-2 bg-green-50 dark:bg-green-900/30 rounded-lg text-green-600">
-                  <Headphones size={18} />
-                </div>
-                <div className="flex-1 text-right">
-                  <p className="font-medium text-sm">الدعم الفني</p>
-                  <p className="text-xs text-gray-500">تواصل عبر واتساب</p>
-                </div>
-              </a>
 
               <div className="border-t border-gray-100 dark:border-gray-800 my-3" />
 

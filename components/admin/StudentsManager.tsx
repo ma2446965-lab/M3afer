@@ -11,9 +11,11 @@ const fmtDate = (v: any): string => {
   return d.toLocaleDateString("ar-EG", { day: "numeric", month: "short", year: "numeric" });
 };
 
-// Effective status: "subscribed" flag + subscriptionEndDate combined
+// Effective status: EITHER activation flag (legacy subscriptionActive or the
+// Fatorak-driven `subscribed`) + subscriptionEndDate combined
 const statusOf = (u: any) => {
-  if (!u.subscriptionActive)
+  const active = u.subscriptionActive === true || u.subscribed === true;
+  if (!active)
     return { label: "غير مشترك", cls: "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-300" };
   if (u.subscriptionEndDate) {
     const end = new Date(u.subscriptionEndDate);
@@ -55,11 +57,12 @@ export default function StudentsManager() {
   }, []);
 
   const filtered = filter.trim()
-    ? students.filter(
-        (u) =>
-          u.email?.toLowerCase().includes(filter.trim().toLowerCase()) ||
-          u.uuid?.includes(filter.trim())
-      )
+    ? students.filter((u) => {
+        const email = String(u.email || "").toLowerCase();
+        const uuid = String(u.uuid || "");
+        const f = filter.trim().toLowerCase();
+        return email.includes(f) || uuid.includes(f);
+      })
     : students;
 
   const activeCount = students.filter((u) => statusOf(u).label === "نشط ✅").length;
@@ -89,8 +92,15 @@ export default function StudentsManager() {
 
   const saveSubscription = async (tier: string, active: boolean) => {
     if (!foundUser) return;
-    const payload: Record<string, any> = { subscription: tier, subscriptionActive: active };
+    // Write BOTH the legacy fields and the Fatorak-era `subscribed` fields so
+    // manual admin activation behaves exactly like a paid webhook activation.
+    const payload: Record<string, any> = {
+      subscription: tier,
+      subscriptionActive: active,
+      subscribed: active
+    };
     if (active) {
+      payload.subscriptionStartDate = foundUser.subscriptionStartDate || new Date().toISOString();
       // If no date picked, default to 30 days from now
       payload.subscriptionEndDate = endDate
         ? new Date(`${endDate}T23:59:59`).toISOString()
@@ -164,7 +174,7 @@ export default function StudentsManager() {
                   return (
                     <tr key={u.docId} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                       <td className="p-3">
-                        <div className="font-bold">{u.email}</div>
+                        <div className="font-bold">{u.email || "بدون إيميل"}</div>
                         {u.role === "admin" && (
                           <span className="text-[10px] bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300 px-1.5 py-0.5 rounded-full font-bold">
                             admin
@@ -172,13 +182,17 @@ export default function StudentsManager() {
                         )}
                       </td>
                       <td className="p-3">
-                        <button
-                          onClick={() => navigator.clipboard?.writeText(u.uuid).catch(() => {})}
-                          title="نسخ UUID كامل"
-                          className="flex items-center gap-1 font-mono text-[11px] text-gray-400 hover:text-indigo-500"
-                        >
-                          {u.uuid?.slice(0, 8)}… <Copy size={11} />
-                        </button>
+                        {u.uuid ? (
+                          <button
+                            onClick={() => navigator.clipboard?.writeText(u.uuid).catch(() => {})}
+                            title="نسخ UUID كامل"
+                            className="flex items-center gap-1 font-mono text-[11px] text-gray-400 hover:text-indigo-500"
+                          >
+                            {u.uuid.slice(0, 8)}… <Copy size={11} />
+                          </button>
+                        ) : (
+                          <span className="text-gray-300">—</span>
+                        )}
                       </td>
                       <td className="p-3 text-gray-500 dark:text-gray-400 text-xs">
                         {u.grade || "—"}
@@ -218,7 +232,7 @@ export default function StudentsManager() {
           <input
             value={searchUuid}
             onChange={(e) => setSearchUuid(e.target.value)}
-            placeholder="الصق UUID المستخدم هنا (من رسالة واتساب)"
+            placeholder="الصق UUID الطالب هنا (بيظهر في صفحة حسابه)"
             className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 font-mono text-sm"
           />
           <button
