@@ -43,7 +43,8 @@ export default function OnboardingFlow({ onComplete }: { onComplete: () => void 
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-indigo-50 to-violet-50 dark:from-gray-900 dark:via-gray-900 dark:to-indigo-950 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[200] overflow-y-auto bg-gradient-to-br from-sky-50 via-indigo-50 to-violet-50 dark:from-gray-900 dark:via-gray-900 dark:to-indigo-950">
+      <div className="min-h-full flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-[32px] shadow-2xl overflow-hidden">
         {/* Progress */}
         <div className="p-6 pb-2">
@@ -161,6 +162,7 @@ export default function OnboardingFlow({ onComplete }: { onComplete: () => void 
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

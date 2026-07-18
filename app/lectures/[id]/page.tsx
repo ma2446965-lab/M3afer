@@ -3,8 +3,6 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import HamburgerMenu from "@/components/HamburgerMenu";
-import BottomNav from "@/components/BottomNav";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { db, storage } from "@/lib/firebase";
 import { LECTURE_PRODUCT } from "@/lib/plans";
@@ -172,10 +170,8 @@ function LectureWatchInner() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-gray-900 pb-24 md:pb-0">
-      <HamburgerMenu />
-      <BottomNav />
 
-      <div className="max-w-3xl mx-auto p-4 pt-16 space-y-4">
+      <div className="max-w-3xl mx-auto p-4 pt-6 md:pt-10 space-y-4">
         <Link href="/lectures" className="text-xs text-indigo-600 dark:text-indigo-400 font-bold inline-flex items-center gap-1">
           <ArrowRight size={14} /> رجوع للمحاضرات
         </Link>
