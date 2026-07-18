@@ -2,20 +2,22 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { Shield, BookOpen, CalendarDays, GraduationCap, Loader2, AlertTriangle, RefreshCw, NotebookPen } from "lucide-react";
+import { Shield, BookOpen, CalendarDays, GraduationCap, Loader2, AlertTriangle, RefreshCw, NotebookPen, Clapperboard } from "lucide-react";
 import SubjectsManager from "@/components/admin/SubjectsManager";
 import SlotsManager from "@/components/admin/SlotsManager";
 import StudentsManager from "@/components/admin/StudentsManager";
 import PlannerRequestsManager from "@/components/admin/PlannerRequestsManager";
+import LecturesManager from "@/components/admin/LecturesManager";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
-type Tab = "subjects" | "slots" | "students" | "planner";
+type Tab = "subjects" | "slots" | "students" | "planner" | "lectures";
 
 const TABS: { id: Tab; label: string; icon: any }[] = [
   { id: "subjects", label: "المواد", icon: BookOpen },
   { id: "slots", label: "المواعيد المتاحة", icon: CalendarDays },
   { id: "students", label: "الطلاب", icon: GraduationCap },
-  { id: "planner", label: "طلبات جدولي 📅", icon: NotebookPen }
+  { id: "planner", label: "طلبات جدولي 📅", icon: NotebookPen },
+  { id: "lectures", label: "المحاضرات 🎬", icon: Clapperboard }
 ];
 
 function FullScreenState({ children }: { children: React.ReactNode }) {
@@ -172,6 +174,7 @@ function AdminPageInner() {
         {tab === "slots" && <SlotsManager />}
         {tab === "students" && <StudentsManager />}
         {tab === "planner" && <PlannerRequestsManager />}
+        {tab === "lectures" && <LecturesManager />}
 
         <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-100 dark:border-amber-900/20">
           <p className="text-xs text-amber-800 dark:text-amber-200 leading-relaxed">

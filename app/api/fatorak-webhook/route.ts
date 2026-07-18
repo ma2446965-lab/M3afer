@@ -6,9 +6,13 @@
 // /api/fatorak-webhook_json -> /api/fatorak-webhook).
 //
 // pay_load (echoed from checkout's payLoad) tells us WHAT was paid:
-//   { uid, plan }                      → subscription: extend +30d/+365d
-//   { uid, kind: "planner50", requestId } → one-time: flip that
-//       scheduleRequests doc to paid+pending (NO subscription change)
+//   { uid, plan }                             → subscription: extend +30d/+365d
+//   { uid, kind:"planner50", requestId }      → flip scheduleRequests doc
+//   { uid, kind:"lecture", lectureId }        → create lecturePurchases doc
+//   { uid, kind:"lecture-bundle", subjectId } → create lecturePurchases for
+//        every eligible (published+paid) lecture of that subject
+// All writes are idempotent & transaction-safe; nothing here relies on the
+// client having done anything correctly.
 import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/server/firebase-admin";
@@ -16,12 +20,17 @@ import { verifyInvoiceWebhookHashKey, verifyExpiryWebhookHashKey } from "@/lib/s
 import {
   PLANS,
   PLANNER_PRODUCT,
+  LECTURE_PRODUCT,
+  LECTURE_BUNDLE,
   computeNewSubscriptionEnd,
+  lectureIdFromPayLoad,
   payLoadKind,
   planFromPayLoad,
   requestIdFromPayLoad,
+  subjectIdFromPayLoad,
   uidFromPayLoad
 } from "@/lib/plans";
+import { isFreeLecture, purchaseId, LECTURES_COL, PURCHASES_COL } from "@/lib/lectures";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,7 +59,6 @@ export async function POST(req: NextRequest) {
   }
 
   // Expiry/cancel webhook (fawry/aman/masary): separate body + hash formula.
-  // Ack & ignore — no state change (but verify when a hashKey IS present).
   if (data.referenceId && !data.invoice_id) {
     if (data.hashKey && !verifyExpiryWebhookHashKey(data)) {
       console.warn("Fatorak webhook: invalid expiry hashKey");
@@ -59,16 +67,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, ignored: "expiry webhook" });
   }
 
-  // Only successful payments mutate state; everything else is acked-ignored
-  // (the documented "failed" webhook carries no hashKey; spoofing it changes
-  // nothing on our side).
+  // Only successful payments mutate state; everything else is acked-ignored.
   if (data.invoice_status !== "paid") {
     return NextResponse.json({ ok: true, ignored: data.invoice_status || "not paid" });
   }
 
   // MANDATORY authenticity check on the state-changing (paid) path:
   // hashKey = HMAC-SHA256("InvoiceId=..&InvoiceKey=..&PaymentMethod=..")
-  //             with the vendor key (FATORAK_SECRET_KEY / FATORAK_WEBHOOK_SECRET).
   if (!verifyInvoiceWebhookHashKey(data)) {
     console.warn("Fatorak webhook: invalid hashKey", { invoice_id: data?.invoice_id });
     return NextResponse.json({ error: "invalid signature" }, { status: 401 });
@@ -87,13 +92,15 @@ export async function POST(req: NextRequest) {
     method: data.payment_method ?? null,
     referenceNumber: data.referenceNumber || null
   };
+  const kind = payLoadKind(rawPayLoad);
 
-  return payLoadKind(rawPayLoad) === PLANNER_PRODUCT.kind
-    ? handlePlannerPaid({ uid, rawPayLoad, paymentRecord })
-    : handleSubscriptionPaid({ uid, rawPayLoad, paymentRecord });
+  if (kind === PLANNER_PRODUCT.kind) return handlePlannerPaid({ uid, rawPayLoad, paymentRecord });
+  if (kind === LECTURE_PRODUCT.kind) return handleLecturePaid({ uid, rawPayLoad, paymentRecord });
+  if (kind === LECTURE_BUNDLE.kind) return handleBundlePaid({ uid, rawPayLoad, paymentRecord });
+  return handleSubscriptionPaid({ uid, rawPayLoad, paymentRecord });
 }
 
-// ---------------------------------------------------------------- planner 50
+// -------------------------------------------------------------- planner 50
 async function handlePlannerPaid(args: {
   uid: string;
   rawPayLoad: unknown;
@@ -113,13 +120,12 @@ async function handlePlannerPaid(args: {
       if (!snap.exists) throw new Error(`scheduleRequest ${requestId} not found`);
       const doc = snap.data() || {};
       if (doc.studentId !== uid) throw new Error(`scheduleRequest ${requestId} uid mismatch`);
-      // Idempotent: a retried webhook for the same invoice must not re-apply.
       if (doc?.payment?.invoiceId === paymentRecord.invoiceId || doc.paid === true) {
         return { duplicate: true as const };
       }
       tx.update(reqRef, {
         paid: true,
-        status: "pending", // paid → now awaiting admin fulfillment
+        status: "pending",
         payment: { ...paymentRecord, amountEgp: PLANNER_PRODUCT.priceEgp, paidAt: nowIso },
         updatedAt: nowIso
       });
@@ -130,6 +136,110 @@ async function handlePlannerPaid(args: {
   } catch (e: any) {
     console.error("Fatorak webhook: failed to mark request paid", e);
     return NextResponse.json({ error: "failed to mark request paid" }, { status: 500 });
+  }
+}
+
+// --------------------------------------------------- single lecture purchase
+async function grantLecture(
+  tx: FirebaseFirestore.Transaction,
+  uid: string,
+  lectureId: string,
+  paymentRecord: any,
+  lectureCache?: Map<string, any>
+): Promise<"created" | "exists" | "skipped"> {
+  const pRef = adminDb.collection(PURCHASES_COL).doc(purchaseId(lectureId, uid));
+  const pSnap = await tx.get(pRef);
+  if (pSnap.exists) return "exists";
+  // Lecture snapshot for denormalized title/price (helps admin views).
+  let lec = lectureCache?.get(lectureId);
+  if (lec === undefined) {
+    const lSnap = await tx.get(adminDb.collection(LECTURES_COL).doc(lectureId));
+    lec = lSnap.exists ? lSnap.data() : null;
+    lectureCache?.set(lectureId, lec);
+  }
+  tx.set(pRef, {
+    studentId: uid,
+    lectureId,
+    subjectId: lec?.subjectId ?? null,
+    lectureTitle: lec?.title ?? null,
+    priceEgp: typeof lec?.priceEgp === "number" ? lec.priceEgp : null,
+    grantedBy: "fatorak-webhook",
+    payment: { ...paymentRecord, paidAt: new Date().toISOString() },
+    createdAt: FieldValue.serverTimestamp()
+  });
+  return "created";
+}
+
+async function handleLecturePaid(args: {
+  uid: string;
+  rawPayLoad: unknown;
+  paymentRecord: any;
+}): Promise<NextResponse> {
+  const { uid, rawPayLoad, paymentRecord } = args;
+  const lectureId = lectureIdFromPayLoad(rawPayLoad);
+  if (!lectureId) {
+    console.error("Fatorak webhook: lecture payment without lectureId");
+    return NextResponse.json({ error: "missing lectureId" }, { status: 400 });
+  }
+  try {
+    const result = await adminDb.runTransaction(async (tx) => {
+      const r = await grantLecture(tx, uid, lectureId, paymentRecord, new Map());
+      return { result: r };
+    });
+    if (result.result === "exists") return NextResponse.json({ ok: true, duplicate: true });
+    return NextResponse.json({ ok: true, kind: LECTURE_PRODUCT.kind, lectureId, granted: true });
+  } catch (e: any) {
+    console.error("Fatorak webhook: failed to grant lecture", e);
+    return NextResponse.json({ error: "failed to grant lecture" }, { status: 500 });
+  }
+}
+
+// ----------------------------------------------------- whole-subject bundle
+async function handleBundlePaid(args: {
+  uid: string;
+  rawPayLoad: unknown;
+  paymentRecord: any;
+}): Promise<NextResponse> {
+  const { uid, rawPayLoad, paymentRecord } = args;
+  const subjectId = subjectIdFromPayLoad(rawPayLoad);
+  if (!subjectId) {
+    console.error("Fatorak webhook: bundle payment without subjectId");
+    return NextResponse.json({ error: "missing subjectId" }, { status: 400 });
+  }
+  try {
+    // Eligibility = the same rule the checkout quoted: published + paid
+    // lectures of the subject (grants for already-owned ones are skipped
+    // idempotently inside the transaction).
+    const lecSnap = await adminDb
+      .collection(LECTURES_COL)
+      .where("subjectId", "==", subjectId)
+      .get();
+    const eligible = lecSnap.docs
+      .map((d) => ({ id: d.id, ...(d.data() as any) }))
+      .filter((l) => l.published !== false && !isFreeLecture(l));
+    if (eligible.length === 0) {
+      return NextResponse.json({ ok: true, granted: 0, note: "no eligible lectures" });
+    }
+    const result = await adminDb.runTransaction(async (tx) => {
+      const cache = new Map<string, any>(eligible.map((l) => [l.id, l]));
+      let granted = 0;
+      for (const l of eligible) {
+        const r = await grantLecture(tx, uid, l.id, paymentRecord, cache);
+        if (r === "created") granted++;
+      }
+      return { granted, total: eligible.length };
+    });
+    return NextResponse.json({
+      ok: true,
+      kind: LECTURE_BUNDLE.kind,
+      subjectId,
+      granted: result.granted,
+      total: result.total,
+      duplicate: result.granted === 0
+    });
+  } catch (e: any) {
+    console.error("Fatorak webhook: failed to grant bundle", e);
+    return NextResponse.json({ error: "failed to grant bundle" }, { status: 500 });
   }
 }
 

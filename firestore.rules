@@ -202,6 +202,39 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ------------------------------------------------------------------
+    // lectures — recorded-video marketplace. The top-level doc is a PUBLIC
+    // catalog entry (title/price/teacher...). The actual media (video URL,
+    // notes PDF path) lives in lectures/{id}/private/media and is readable
+    // ONLY by: an admin, or anyone while the lecture is free/preview, or a
+    // student holding the matching lecturePurchases/{lectureId}_{uid} doc
+    // (created exclusively by the Fatorak webhook via Admin SDK).
+    // ------------------------------------------------------------------
+    match /lectures/{lectureId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+
+      match /private/{docId} {
+        allow read: if isAdmin() || (
+          isSignedIn() && (
+            get(/databases/$(database)/documents/lectures/$(lectureId)).data.priceEgp == 0 ||
+            get(/databases/$(database)/documents/lectures/$(lectureId)).data.isFreePreview == true ||
+            exists(/databases/$(database)/documents/lecturePurchases/$(lectureId)_$(request.auth.uid))
+          )
+        );
+        // Media (videoUrl / notesPdfPath) is authored from the admin panel.
+        allow write: if isAdmin();
+      }
+    }
+
+    // lecturePurchases — proof of payment. Server-only writes (webhook);
+    // students read only their own, admin reads all.
+    match /lecturePurchases/{purchaseId} {
+      allow read: if isAdmin() ||
+        (isSignedIn() && resource.data.studentId == request.auth.uid);
+      allow create, update, delete: if false;
+    }
+
     match /{document=**} {
       allow read: if isAdmin();
     }

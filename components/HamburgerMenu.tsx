@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Menu, X, Moon, Sun, Languages, CreditCard, MessageCircle, LogOut, Shield, BookOpen, CalendarPlus, CalendarCheck, CalendarDays } from "lucide-react";
+import { Menu, X, Moon, Sun, Languages, CreditCard, MessageCircle, LogOut, Shield, BookOpen, CalendarPlus, CalendarCheck, CalendarDays, Clapperboard } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
@@ -99,6 +99,16 @@ export default function HamburgerMenu() {
                 <div className="flex-1 text-right">
                   <p className="font-medium text-sm">الاشتراك</p>
                   <p className="text-xs text-gray-500">من 150 ج.م/شهر — فتح كل المميزات ✨</p>
+                </div>
+              </Link>
+
+              <Link href="/lectures" onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg text-indigo-600">
+                  <Clapperboard size={18} />
+                </div>
+                <div className="flex-1 text-right">
+                  <p className="font-medium text-sm flex items-center gap-2">المحاضرات <span className="text-[10px] bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded-full font-bold">جديد ✨</span></p>
+                  <p className="text-xs text-gray-500">محاضرات مسجلة تشتريها وتفضل معاك — معاينات مجانية 🎬</p>
                 </div>
               </Link>
 

@@ -25,6 +25,29 @@ service firebase.storage {
       );
     }
 
+    // Lecture thumbnails — public marketing images (shown on catalog cards).
+    match /lecture-thumbs/{lectureId}/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin()
+        && request.resource.size < 3 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // Lecture notes (PDF) — same access as the video: owner-purchaser/admin,
+    // or anyone while the lecture itself is free/preview.
+    match /lecture-notes/{lectureId}/{fileName} {
+      allow read: if request.auth != null && (
+        isAdmin() ||
+        firestore.get(/databases/(default)/documents/lectures/$(lectureId)).data.priceEgp == 0 ||
+        firestore.get(/databases/(default)/documents/lectures/$(lectureId)).data.isFreePreview == true ||
+        firestore.exists(/databases/(default)/documents/lecturePurchases/$(lectureId)_$(request.auth.uid))
+      );
+      allow write: if isAdmin()
+        && request.resource.size < 15 * 1024 * 1024
+        && (request.resource.contentType == 'application/pdf' ||
+            request.resource.contentType.matches('image/.*'));
+    }
+
     // Deny everything else by default.
     match /{allPaths=**} {
       allow read, write: if false;

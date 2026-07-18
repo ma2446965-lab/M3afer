@@ -127,8 +127,22 @@ export const PLANNER_PRODUCT = {
   priceEgp: 50
 } as const;
 
+// Recorded-video lectures marketplace — per-lecture purchases plus a
+// whole-subject bundle at a discount. Prices come from each lecture doc
+// (server-read at checkout; nothing client-side is ever trusted).
+export const LECTURE_PRODUCT = { kind: "lecture" } as const;
+export const LECTURE_BUNDLE = {
+  kind: "lecture-bundle",
+  /** 20% off the sum of the subject's paid lectures */
+  discountPct: 0.2
+} as const;
+
 /** pay_load discrimination: legacy subscription invoices carry NO `kind`. */
-export type PayLoadKind = "plan" | typeof PLANNER_PRODUCT.kind;
+export type PayLoadKind =
+  | "plan"
+  | typeof PLANNER_PRODUCT.kind
+  | typeof LECTURE_PRODUCT.kind
+  | typeof LECTURE_BUNDLE.kind;
 
 function fieldOf(raw: unknown, key: string): unknown {
   if (raw && typeof raw === "object") return (raw as any)[key];
@@ -142,13 +156,36 @@ function fieldOf(raw: unknown, key: string): unknown {
   return undefined;
 }
 
-/** What does this pay_load pay FOR? ("plan" = subscription, else a product) */
-export function payLoadKind(raw: unknown): PayLoadKind {
-  return fieldOf(raw, "kind") === PLANNER_PRODUCT.kind ? PLANNER_PRODUCT.kind : "plan";
+/** Generic, shape-tolerant pay_load field reader (object or JSON string). */
+export function payLoadField(raw: unknown, key: string): unknown {
+  return fieldOf(raw, key);
 }
 
-/** scheduleRequests doc id travels in payLoad for one-time product invoices. */
-export function requestIdFromPayLoad(raw: unknown): string | undefined {
-  const v = fieldOf(raw, "requestId");
+function strField(raw: unknown, key: string): string | undefined {
+  const v = fieldOf(raw, key);
   return typeof v === "string" && v ? v : undefined;
+}
+
+/** What does this pay_load pay FOR? ("plan" = subscription, else a product) */
+export function payLoadKind(raw: unknown): PayLoadKind {
+  const k = fieldOf(raw, "kind");
+  if (k === PLANNER_PRODUCT.kind) return PLANNER_PRODUCT.kind;
+  if (k === LECTURE_PRODUCT.kind) return LECTURE_PRODUCT.kind;
+  if (k === LECTURE_BUNDLE.kind) return LECTURE_BUNDLE.kind;
+  return "plan";
+}
+
+/** scheduleRequests doc id travels in payLoad for the planner product. */
+export function requestIdFromPayLoad(raw: unknown): string | undefined {
+  return strField(raw, "requestId");
+}
+
+/** lecture id travels in payLoad for single-lecture purchases. */
+export function lectureIdFromPayLoad(raw: unknown): string | undefined {
+  return strField(raw, "lectureId");
+}
+
+/** subject id travels in payLoad for whole-subject bundle purchases. */
+export function subjectIdFromPayLoad(raw: unknown): string | undefined {
+  return strField(raw, "subjectId");
 }
