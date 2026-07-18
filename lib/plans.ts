@@ -114,3 +114,41 @@ export function computeNewSubscriptionEnd(
     stacked: stillActive
   };
 }
+
+// ---------------------------------------------------------------------------
+// One-time products (flat fee, NOT subscriptions — no subscriptionEndDate is
+// touched when these are paid). First product: "جدولي" hand-built study
+// planner: student submits an intake form, pays 50 EGP once, admin uploads a
+// personalized schedule image back within 24h.
+// ---------------------------------------------------------------------------
+export const PLANNER_PRODUCT = {
+  kind: "planner50",
+  nameAr: "جدول مذاكرة مخصوص — خدمة «جدولي 📅»",
+  priceEgp: 50
+} as const;
+
+/** pay_load discrimination: legacy subscription invoices carry NO `kind`. */
+export type PayLoadKind = "plan" | typeof PLANNER_PRODUCT.kind;
+
+function fieldOf(raw: unknown, key: string): unknown {
+  if (raw && typeof raw === "object") return (raw as any)[key];
+  if (typeof raw === "string" && raw.trim().startsWith("{")) {
+    try {
+      return fieldOf(JSON.parse(raw), key);
+    } catch {
+      return undefined;
+    }
+  }
+  return undefined;
+}
+
+/** What does this pay_load pay FOR? ("plan" = subscription, else a product) */
+export function payLoadKind(raw: unknown): PayLoadKind {
+  return fieldOf(raw, "kind") === PLANNER_PRODUCT.kind ? PLANNER_PRODUCT.kind : "plan";
+}
+
+/** scheduleRequests doc id travels in payLoad for one-time product invoices. */
+export function requestIdFromPayLoad(raw: unknown): string | undefined {
+  const v = fieldOf(raw, "requestId");
+  return typeof v === "string" && v ? v : undefined;
+}

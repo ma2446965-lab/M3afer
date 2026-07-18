@@ -2,23 +2,24 @@
 // Fawaterak "paid transactions webhook" — fires when an invoice becomes paid.
 // Docs: https://fawaterak-api.readme.io/reference/web-hook
 //
-// IMPORTANT: Fawaterak sends the body as JSON if the configured webhook URL
-// contains "_json" — that's why next.config.js rewrites
-// /api/fatorak-webhook_json -> /api/fatorak-webhook (see checkout route,
-// which passes webhookUrl with the _json suffix).
+// The `_json` URL suffix makes Fawaterak send JSON (next.config.js rewrites
+// /api/fatorak-webhook_json -> /api/fatorak-webhook).
 //
-// Plan handling: the checkout route stamps payLoad = { uid, plan } when it
-// creates the invoice; Fawaterak echoes it back here as pay_load. The plan id
-// ("monthly" → +30 days, "yearly" → +365 days) decides how far the
-// subscriptionEndDate is extended (lib/plans.ts is the single source of truth).
+// pay_load (echoed from checkout's payLoad) tells us WHAT was paid:
+//   { uid, plan }                      → subscription: extend +30d/+365d
+//   { uid, kind: "planner50", requestId } → one-time: flip that
+//       scheduleRequests doc to paid+pending (NO subscription change)
 import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/server/firebase-admin";
 import { verifyInvoiceWebhookHashKey, verifyExpiryWebhookHashKey } from "@/lib/server/fatorak";
 import {
   PLANS,
+  PLANNER_PRODUCT,
   computeNewSubscriptionEnd,
+  payLoadKind,
   planFromPayLoad,
+  requestIdFromPayLoad,
   uidFromPayLoad
 } from "@/lib/plans";
 
@@ -48,9 +49,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid body" }, { status: 400 });
   }
 
-  // Expiry/cancel webhook (fawry/aman/masary): different body shape + its own
-  // hash formula (referenceId & PaymentMethod, per docs). We take NO state
-  // change for these — verify the signature when present, then ack & ignore.
+  // Expiry/cancel webhook (fawry/aman/masary): separate body + hash formula.
+  // Ack & ignore — no state change (but verify when a hashKey IS present).
   if (data.referenceId && !data.invoice_id) {
     if (data.hashKey && !verifyExpiryWebhookHashKey(data)) {
       console.warn("Fatorak webhook: invalid expiry hashKey");
@@ -59,38 +59,92 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, ignored: "expiry webhook" });
   }
 
-  // We only mutate state on successful payments. Everything else (e.g. the
-  // documented "failed payment" webhook — whose example body has NO hashKey)
-  // is acknowledged & ignored WITHOUT signature verification, because
-  // spoofing it changes nothing on our side.
+  // Only successful payments mutate state; everything else is acked-ignored
+  // (the documented "failed" webhook carries no hashKey; spoofing it changes
+  // nothing on our side).
   if (data.invoice_status !== "paid") {
     return NextResponse.json({ ok: true, ignored: data.invoice_status || "not paid" });
   }
 
-  // Authenticity check — MANDATORY on the state-changing (paid) path:
+  // MANDATORY authenticity check on the state-changing (paid) path:
   // hashKey = HMAC-SHA256("InvoiceId=..&InvoiceKey=..&PaymentMethod=..")
-  //             with FATORAK_SECRET_KEY (docs' "vendor key"), verified live
-  //             against the published Web Hook page.
+  //             with the vendor key (FATORAK_SECRET_KEY / FATORAK_WEBHOOK_SECRET).
   if (!verifyInvoiceWebhookHashKey(data)) {
     console.warn("Fatorak webhook: invalid hashKey", { invoice_id: data?.invoice_id });
     return NextResponse.json({ error: "invalid signature" }, { status: 401 });
   }
 
-  // Which payment is this? pay_load = the payLoad we sent at checkout time:
-  // { uid, plan } — plan decides the extension length (+30d / +365d).
   const rawPayLoad = data.pay_load ?? data.payLoad;
   const uid = uidFromPayLoad(rawPayLoad);
-  const planId = planFromPayLoad(rawPayLoad);
-  const plan = PLANS[planId];
   if (!uid) {
     console.error("Fatorak webhook: paid invoice without uid", { invoice_id: data.invoice_id });
     return NextResponse.json({ error: "missing uid" }, { status: 400 });
   }
 
-  // Activate/extend the subscription — idempotent: a retried webhook for the
-  // same invoiceId must NOT extend the duration a second time.
+  const paymentRecord = {
+    invoiceId: data.invoice_id ?? null,
+    invoiceKey: data.invoice_key ?? null,
+    method: data.payment_method ?? null,
+    referenceNumber: data.referenceNumber || null
+  };
+
+  return payLoadKind(rawPayLoad) === PLANNER_PRODUCT.kind
+    ? handlePlannerPaid({ uid, rawPayLoad, paymentRecord })
+    : handleSubscriptionPaid({ uid, rawPayLoad, paymentRecord });
+}
+
+// ---------------------------------------------------------------- planner 50
+async function handlePlannerPaid(args: {
+  uid: string;
+  rawPayLoad: unknown;
+  paymentRecord: any;
+}): Promise<NextResponse> {
+  const { uid, rawPayLoad, paymentRecord } = args;
+  const requestId = requestIdFromPayLoad(rawPayLoad);
+  if (!requestId) {
+    console.error("Fatorak webhook: planner payment without requestId");
+    return NextResponse.json({ error: "missing requestId" }, { status: 400 });
+  }
+  const reqRef = adminDb.doc(`scheduleRequests/${requestId}`);
+  const nowIso = new Date().toISOString();
+  try {
+    const result = await adminDb.runTransaction(async (tx) => {
+      const snap = await tx.get(reqRef);
+      if (!snap.exists) throw new Error(`scheduleRequest ${requestId} not found`);
+      const doc = snap.data() || {};
+      if (doc.studentId !== uid) throw new Error(`scheduleRequest ${requestId} uid mismatch`);
+      // Idempotent: a retried webhook for the same invoice must not re-apply.
+      if (doc?.payment?.invoiceId === paymentRecord.invoiceId || doc.paid === true) {
+        return { duplicate: true as const };
+      }
+      tx.update(reqRef, {
+        paid: true,
+        status: "pending", // paid → now awaiting admin fulfillment
+        payment: { ...paymentRecord, amountEgp: PLANNER_PRODUCT.priceEgp, paidAt: nowIso },
+        updatedAt: nowIso
+      });
+      return { duplicate: false as const };
+    });
+    if (result.duplicate) return NextResponse.json({ ok: true, duplicate: true });
+    return NextResponse.json({ ok: true, kind: PLANNER_PRODUCT.kind, requestId, status: "pending" });
+  } catch (e: any) {
+    console.error("Fatorak webhook: failed to mark request paid", e);
+    return NextResponse.json({ error: "failed to mark request paid" }, { status: 500 });
+  }
+}
+
+// -------------------------------------------------------------- subscription
+async function handleSubscriptionPaid(args: {
+  uid: string;
+  rawPayLoad: unknown;
+  paymentRecord: any;
+}): Promise<NextResponse> {
+  const { uid, rawPayLoad, paymentRecord } = args;
+  const planId = planFromPayLoad(rawPayLoad);
+  const plan = PLANS[planId];
+
   const userRef = adminDb.doc(`users/${uid}`);
-  const paymentRef = userRef.collection("payments").doc(String(data.invoice_id));
+  const paymentRef = userRef.collection("payments").doc(String(paymentRecord.invoiceId));
   const now = Date.now();
 
   try {
@@ -110,25 +164,20 @@ export async function POST(req: NextRequest) {
         planId
       );
       const newEnd = new Date(newEndMs);
+      const nowIso = new Date(now).toISOString();
 
       tx.set(
         userRef,
         {
           subscribed: true,
-          subscriptionStartDate: stacked
-            ? userData.subscriptionStartDate || new Date(now).toISOString()
-            : new Date(now).toISOString(),
+          subscriptionStartDate: stacked ? userData.subscriptionStartDate || nowIso : nowIso,
           subscriptionEndDate: newEnd.toISOString(),
-          // Which plan the current active period came from (latest payment wins)
           subscriptionPlan: planId,
           lastPayment: {
-            invoiceId: data.invoice_id ?? null,
-            invoiceKey: data.invoice_key ?? null,
-            method: data.payment_method ?? null,
-            referenceNumber: data.referenceNumber || null,
+            ...paymentRecord,
             plan: planId,
             amountEgp: plan.priceEgp,
-            paidAt: new Date(now).toISOString()
+            paidAt: nowIso
           }
         },
         { merge: true }
@@ -140,19 +189,14 @@ export async function POST(req: NextRequest) {
         amountEgp: plan.priceEgp,
         durationDays: plan.durationDays,
         stacked,
-        invoiceId: data.invoice_id ?? null,
-        invoiceKey: data.invoice_key ?? null,
-        method: data.payment_method ?? null,
-        referenceNumber: data.referenceNumber || null,
-        paidAt: new Date(now).toISOString(),
+        ...paymentRecord,
+        paidAt: nowIso,
         createdAt: FieldValue.serverTimestamp()
       });
       return { duplicate: false as const, newEnd: newEnd.toISOString(), plan: planId, stacked };
     });
 
-    if (result.duplicate) {
-      return NextResponse.json({ ok: true, duplicate: true });
-    }
+    if (result.duplicate) return NextResponse.json({ ok: true, duplicate: true });
     return NextResponse.json({
       ok: true,
       plan: result.plan,
