@@ -5,25 +5,11 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { v4 as uuidv4 } from "uuid";
 
-export interface UserProfile {
-  uid: string;
-  email: string;
-  uuid: string;
-  grade: string | null;
-  track: string | null;
-  role: "user" | "admin";
-  subscription: "free" | "basic" | "pro" | "premium";
-  subscriptionActive: boolean;
-  /** New canonical paid flag — set automatically by the Fatorak webhook */
-  subscribed?: boolean;
-  subscriptionStartDate?: string | null;
-  subscriptionEndDate?: string | null;
-  streak: number;
-  lastActiveDate: string | null;
-  weeklySubjects: string[];
-  preferredPersona: "ing.Mohamed" | "Dr.Basmala";
-  createdAt: string;
-}
+// UserProfile + doc→profile normalization live in lib/profile.ts (pure, no
+// Firebase imports) so they're unit-testable. The normalizer makes hand-made
+// admin docs (usually just {role:"admin"}) safe to render on every page.
+import { normalizeProfile, type UserProfile } from "@/lib/profile";
+export type { UserProfile };
 
 interface AuthContextType {
   user: User | null;
@@ -60,7 +46,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const docRef = doc(db, "users", uid);
       const snap = await getDoc(docRef);
       if (snap.exists()) {
-        setProfile(snap.data() as UserProfile);
+        // Was: setProfile(snap.data() as UserProfile) — trusted the doc shape
+        // blindly; hand-made admin docs missing `email` then crashed /profile
+        // at render (profile.email[0]). Normalize instead.
+        setProfile(normalizeProfile(snap.data(), uid, emailFallback));
       } else {
         // Create profile if not exists (for existing auth users)
         const newProfile: UserProfile = {
