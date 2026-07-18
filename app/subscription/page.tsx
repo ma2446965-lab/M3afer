@@ -2,8 +2,6 @@
 import { Suspense, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
-import HamburgerMenu from "@/components/HamburgerMenu";
-import BottomNav from "@/components/BottomNav";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { PLANS, type PlanId } from "@/lib/plans";
 import {
@@ -126,11 +124,9 @@ function SubscriptionPageInner() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-gray-900 pb-24 md:pb-0">
-      <HamburgerMenu />
-      <BottomNav />
 
       {/* Header */}
-      <div className="bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 text-white p-6 pt-16 pb-8 rounded-b-[32px] relative overflow-hidden">
+      <div className="bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 text-white p-6 pt-6 pb-8 md:pt-10 rounded-b-[32px] relative overflow-hidden">
         <div className="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full blur-3xl -translate-y-20 translate-x-20" />
         <div className="relative max-w-5xl mx-auto">
           <h1 className="text-2xl font-bold flex items-center gap-2">

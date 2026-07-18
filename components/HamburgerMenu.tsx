@@ -1,26 +1,35 @@
 "use client";
 import { useState } from "react";
-import { Menu, X, Moon, Sun, Languages, CreditCard, MessageCircle, LogOut, Shield, BookOpen, CalendarPlus, CalendarCheck, CalendarDays, Clapperboard } from "lucide-react";
+import { Menu, X, Moon, Sun, Languages, CreditCard, MessageCircle, LogOut, Shield, BookOpen, CalendarPlus, CalendarCheck, CalendarDays, Clapperboard, Home } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
+import { homeHrefForRole } from "@/lib/nav";
 
+/**
+ * Mobile-only drawer (md+ uses the persistent SideNav instead).
+ * The trigger renders in normal flow — AppShell mounts it inside the mobile
+ * top bar — so it no longer floats over page content.
+ */
 export default function HamburgerMenu() {
   const [open, setOpen] = useState(false);
   const { theme, language, toggleTheme, setLanguage, setFabVisible, isFabVisible } = useTheme();
   const { profile, logout } = useAuth();
+  const isAdmin = profile?.role === "admin";
+  const homeHref = homeHrefForRole(profile?.role);
 
   return (
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed top-4 right-4 z-50 p-3 bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-100 dark:border-gray-700 hover:scale-105 transition-transform"
+        aria-label="فتح القائمة"
+        className="md:hidden p-2.5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
       >
-        <Menu size={22} />
+        <Menu size={20} />
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-[100] flex">
+        <div className="md:hidden fixed inset-0 z-[100] flex">
           {/* backdrop */}
           <div className="flex-1 bg-black/40 backdrop-blur-sm" onClick={() => setOpen(false)} />
           
@@ -92,6 +101,17 @@ export default function HamburgerMenu() {
 
               <div className="border-t border-gray-100 dark:border-gray-800 my-3" />
 
+              {/* Universal "back to home" — admins land on their dashboard */}
+              <Link href={homeHref} onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                <div className="p-2 bg-sky-50 dark:bg-sky-900/30 rounded-lg text-sky-600 dark:text-sky-400">
+                  <Home size={18} />
+                </div>
+                <div className="flex-1 text-right">
+                  <p className="font-medium text-sm">{isAdmin ? "لوحة الأدمن" : "الرئيسية"}</p>
+                  <p className="text-xs text-gray-500">{isAdmin ? "الرجوع للوحة التحكم" : "الرجوع للصفحة الرئيسية"}</p>
+                </div>
+              </Link>
+
               <Link href="/subscription" onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
                 <div className="p-2 bg-amber-50 dark:bg-amber-900/30 rounded-lg text-amber-600">
                   <CreditCard size={18} />
@@ -147,7 +167,7 @@ export default function HamburgerMenu() {
                   <CalendarCheck size={18} />
                 </div>
                 <div className="flex-1 text-right">
-                  <p className="font-medium text-sm">جدولي</p>
+                  <p className="font-medium text-sm">حصصي</p>
                   <p className="text-xs text-gray-500">حصصك المحجوزة بالتاريخ</p>
                 </div>
               </Link>

@@ -1,9 +1,6 @@
 "use client";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
-import BottomNav from "@/components/BottomNav";
-import HamburgerMenu from "@/components/HamburgerMenu";
-import FloatingChat from "@/components/FloatingChat";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { getSubjectsForGradeTrack } from "@/lib/subjects";
 import { Copy, Flame, BookOpen, Brain, Crown, Settings, Edit } from "lucide-react";
@@ -39,11 +36,8 @@ function ProfilePageInner() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-gray-900 pb-24">
-      <HamburgerMenu />
-      <FloatingChat />
-      <BottomNav />
 
-      <div className="max-w-2xl mx-auto p-4 pt-16">
+      <div className="max-w-2xl mx-auto p-4 pt-6 md:pt-10">
         {/* Profile Header */}
         <div className="bg-gradient-to-br from-sky-500 to-indigo-600 rounded-[24px] p-6 text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-2xl -translate-y-10 translate-x-10" />

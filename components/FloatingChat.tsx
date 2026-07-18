@@ -22,9 +22,20 @@ export default function FloatingChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [position, setPosition] = useState({ x: 20, y: 100 });
   const [isDragging, setIsDragging] = useState(false);
+  // On md+ the persistent SideNav occupies the inline-start edge (256px) —
+  // shift the FAB so it never sits on top of it.
+  const [isDesktop, setIsDesktop] = useState(false);
   const fabRef = useRef<HTMLDivElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   useEffect(() => {
     if (profile?.preferredPersona) {
@@ -115,7 +126,7 @@ export default function FloatingChat() {
         <div
           ref={fabRef}
           className="fixed z-50 select-none"
-          style={{ right: `${position.x}px`, bottom: `${position.y}px`, cursor: isDragging ? "grabbing" : "grab" }}
+          style={{ right: `${position.x + (isDesktop ? 264 : 0)}px`, bottom: `${position.y}px`, cursor: isDragging ? "grabbing" : "grab" }}
           onMouseDown={handleMouseDown}
         >
           <div className="relative">

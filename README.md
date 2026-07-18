@@ -8,9 +8,16 @@ Built with Next.js 14 (App Router), Firebase (Auth, Firestore, Storage), Gemini 
 
 ### 1. UI/UX & Layout
 - ✅ Mobile-first responsive (looks like native app)
-- ✅ Bottom Navigation Bar: Home, Library, Quizzes, Profile
-- ✅ Hamburger Menu Drawer: Settings, Language (AR/EN), Dark/Light toggle, Subscription, Support
-- ✅ Floating AI Chat (Draggable FAB) with close X, reopen from hamburger menu, bottom-sheet chat
+- ✅ **Responsive app shell** (`components/AppShell.tsx`, single mount in root layout):
+  - **Phones (<768px)**: sticky top bar (logo → home + hamburger) + floating BottomNav
+  - **Tablets & desktops (≥768px)**: persistent `SideNav` (RTL, 256px) — the content column
+    gets `md:ps-64` so every page **reflows around the sidebar instead of being covered by it**
+  - Auth/onboarding routes render chrome-free (`lib/nav.ts → shouldHideChrome`)
+- ✅ **Universal "back to home"**: app logo in the top bar / sidebar always returns home —
+  role-aware via `lib/nav.ts → homeHrefForRole` (admins → `/admin` dashboard, students → `/`)
+  so admins are never kicked out of their context
+- ✅ Nav model centralized in `lib/nav.ts` (add a route → one entry, `IconKey` + labels)
+- ✅ Floating AI Chat (Draggable FAB) auto-offsets on md+ so it never covers the sidebar
 
 ### 2. Onboarding (Blocking)
 - ✅ After signup, mandatory Grade & Track selection

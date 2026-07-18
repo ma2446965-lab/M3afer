@@ -3,9 +3,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { getSubjectsForGradeTrack } from "@/lib/subjects";
-import BottomNav from "@/components/BottomNav";
-import HamburgerMenu from "@/components/HamburgerMenu";
-import FloatingChat from "@/components/FloatingChat";
 import OnboardingFlow from "@/components/OnboardingFlow";
 import { Flame, BookOpen, Brain, Target, Clock, Upload, Sparkles, TrendingUp, CalendarPlus } from "lucide-react";
 import Link from "next/link";
@@ -46,13 +43,9 @@ export default function HomePage() {
   const today = new Date().toLocaleDateString("ar-EG", { weekday: "long", day: "numeric", month: "long" });
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] dark:bg-gray-900 pb-24 md:pb-0">
-      <HamburgerMenu />
-      <FloatingChat />
-      <BottomNav />
-
+    <div className="min-h-screen bg-[#f8fafc] dark:bg-gray-900 pb-24 md:pb-8">
       {/* Header */}
-      <div className="bg-gradient-to-br from-sky-500 via-indigo-600 to-violet-600 text-white p-6 pt-16 pb-8 rounded-b-[32px] relative overflow-hidden">
+      <div className="bg-gradient-to-br from-sky-500 via-indigo-600 to-violet-600 text-white p-6 pt-6 pb-8 md:pt-10 rounded-b-[32px] relative overflow-hidden">
         <div className="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full blur-3xl -translate-y-20 translate-x-20" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full blur-3xl translate-y-20 -translate-x-20" />
         
@@ -200,26 +193,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Desktop Sidebar nav */}
-      <div className="hidden md:flex fixed top-0 left-0 bottom-0 w-64 bg-white dark:bg-gray-800 border-r dark:border-gray-700 p-6 flex-col">
-        <h1 className="font-black text-2xl bg-gradient-to-r from-sky-500 to-indigo-600 bg-clip-text text-transparent">Meafer.ai</h1>
-        <p className="text-xs text-gray-500 mt-1">Thanaweya Amma Platform</p>
-        <nav className="mt-8 space-y-1">
-          {[
-            { href: "/", label: "الرئيسية", icon: "🏠" },
-            { href: "/library", label: "المكتبة", icon: "📚" },
-            { href: "/quizzes", label: "الكويزات", icon: "🧠" },
-            { href: "/booking", label: "احجز حصة", icon: "📅" },
-            { href: "/schedule", label: "جدولي", icon: "🗓️" },
-            { href: "/profile", label: "حسابي", icon: "👤" },
-            { href: "/subscription", label: "الاشتراك", icon: "💎" },
-          ].map(item => (
-            <Link key={item.href} href={item.href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 font-medium">
-              <span>{item.icon}</span> {item.label}
-            </Link>
-          ))}
-        </nav>
-      </div>
     </div>
   );
 }
