@@ -2,13 +2,16 @@
 // Verifies the student's Firebase ID token, then creates a Fawaterak e-invoice
 // link (SendPayment/createInvoiceLink) and returns its hosted-payment URL.
 //
-// TWO purchase modes (same Fatorak flow):
-//   { plan: "monthly" | "yearly" }                       → subscription
-//   { product: "planner50", requestId: "<doc id>" }      → one-time 50 EGP
-//      "جدولي" planner service; the scheduleRequests doc must exist, belong
-//      to this uid, and be unpaid (all verified here server-side).
+// Purchase modes (same Fatorak flow, server-trusted pricing ONLY):
+//   { plan: "monthly" | "yearly" }                              → subscription
+//   { product: "planner50", requestId }                         → 50 EGP planner
+//   { product: "lecture", lectureId }                           → one lecture
+//   { product: "lecture-bundle", subjectId }                    → whole subject
+//      (published+paid lectures not already owned, bundled at a discount —
+//      both the item list and the price are recomputed HERE from Firestore,
+//      so nothing the client sends can influence the amount)
 //
-// Plans/prices live in lib/plans.ts (single source of truth).
+// Plans/prices/kinds live in lib/plans.ts; bundle math in lib/lectures.ts.
 // Error responses carry a machine-readable `reason` + upstream excerpt (the
 // same info is logged server-side for Vercel Runtime Logs).
 import { NextRequest, NextResponse } from "next/server";
@@ -19,8 +22,17 @@ import {
   isPlanId,
   PLANS,
   PLANNER_PRODUCT,
+  LECTURE_PRODUCT,
+  LECTURE_BUNDLE,
   type PlanId
 } from "@/lib/plans";
+import {
+  computeBundleQuote,
+  isFreeLecture,
+  purchaseId,
+  LECTURES_COL,
+  PURCHASES_COL
+} from "@/lib/lectures";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -66,19 +78,16 @@ export async function POST(req: NextRequest) {
   let itemName: string;
   let payLoad: Record<string, string>;
   let redirectBase: string;
-  let mode: "plan" | "planner50";
+  let mode: string;
 
-  if (parsed?.product != null) {
-    // ---- One-time product: the 50 EGP "جدولي" planner service ----
-    if (parsed.product !== PLANNER_PRODUCT.kind) {
-      return err(400, "منتج غير معروف", "unknown_product");
-    }
+  const product = parsed?.product;
+
+  if (product === PLANNER_PRODUCT.kind) {
+    // ---- One-time: the 50 EGP "جدولي" planner service ----
     mode = PLANNER_PRODUCT.kind;
     const requestId = typeof parsed.requestId === "string" ? parsed.requestId : "";
     if (!requestId) return err(400, "رقم الطلب ناقص", "missing_request_id");
 
-    // Server-side ownership/state gate — a payable link is only created for a
-    // real, unpaid request that belongs to this uid.
     let reqData: any;
     try {
       const snap = await adminDb.doc(`scheduleRequests/${requestId}`).get();
@@ -100,6 +109,65 @@ export async function POST(req: NextRequest) {
     itemName = PLANNER_PRODUCT.nameAr;
     payLoad = { uid, kind: PLANNER_PRODUCT.kind, requestId };
     redirectBase = `${origin}/planner`;
+  } else if (product === LECTURE_PRODUCT.kind) {
+    // ---- One-time: a single recorded lecture ----
+    mode = LECTURE_PRODUCT.kind;
+    const lectureId = typeof parsed.lectureId === "string" ? parsed.lectureId : "";
+    if (!lectureId) return err(400, "رقم المحاضرة ناقص", "missing_lecture_id");
+
+    let lecture: any;
+    let owned: boolean;
+    try {
+      const [lecSnap, ownSnap] = await Promise.all([
+        adminDb.collection(LECTURES_COL).doc(lectureId).get(),
+        adminDb.collection(PURCHASES_COL).doc(purchaseId(lectureId, uid)).get()
+      ]);
+      lecture = lecSnap.exists ? lecSnap.data() : null;
+      owned = ownSnap.exists;
+    } catch (e: any) {
+      console.error("checkout: lecture lookup failed", e);
+      return err(500, "تعذر التحقق من المحاضرة", "lecture_lookup_failed");
+    }
+    if (!lecture) return err(404, "المحاضرة غير موجودة", "lecture_not_found");
+    if (lecture.published === false) return err(404, "المحاضرة غير متاحة", "lecture_unpublished");
+    if (owned) return err(409, "المحاضرة دي عندك بالفعل ✅", "already_owned");
+    if (isFreeLecture(lecture)) return err(400, "المحاضرة دي مجانية أصلاً 🎁", "lecture_is_free");
+
+    amountEgp = Math.round(Number(lecture.priceEgp));
+    itemName = `محاضرة مسجلة: ${String(lecture.title || "محاضرة").slice(0, 80)}`;
+    payLoad = { uid, kind: LECTURE_PRODUCT.kind, lectureId };
+    redirectBase = `${origin}/lectures/${lectureId}`;
+  } else if (product === LECTURE_BUNDLE.kind) {
+    // ---- One-time: whole-subject bundle at a discount ----
+    mode = LECTURE_BUNDLE.kind;
+    const subjectId = typeof parsed.subjectId === "string" ? parsed.subjectId : "";
+    if (!subjectId) return err(400, "رقم المادة ناقص", "missing_subject_id");
+
+    let quote;
+    try {
+      const [lecSnap, ownSnap] = await Promise.all([
+        adminDb.collection(LECTURES_COL).where("subjectId", "==", subjectId).get(),
+        adminDb.collection(PURCHASES_COL).where("studentId", "==", uid).get()
+      ]);
+      const ownedIds = new Set(ownSnap.docs.map((d) => (d.data() as any).lectureId));
+      const lectures = lecSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+      quote = computeBundleQuote(lectures, subjectId, ownedIds, LECTURE_BUNDLE.discountPct);
+    } catch (e: any) {
+      console.error("checkout: bundle lookup failed", e);
+      return err(500, "تعذر حساب الباقة", "bundle_lookup_failed");
+    }
+    if (!quote) {
+      return err(409, "مفيش محاضرات مدفوعة متبقية في المادة دي — عندك كل حاجة بالفعل ✅", "nothing_to_buy");
+    }
+
+    amountEgp = quote.totalEgp;
+    itemName = `باقة محاضرات كاملة (${quote.count} محاضرة — خصم ${Math.round(
+      LECTURE_BUNDLE.discountPct * 100
+    )}%)`;
+    payLoad = { uid, kind: LECTURE_BUNDLE.kind, subjectId };
+    redirectBase = `${origin}/lectures`;
+  } else if (product != null) {
+    return err(400, "منتج غير معروف", "unknown_product");
   } else {
     // ---- Subscription plans (default) ----
     mode = "plan";
@@ -127,8 +195,7 @@ export async function POST(req: NextRequest) {
       customer_unique_id: uid
     },
     cartItems: [{ name: itemName, price: String(amountEgp), quantity: "1" }],
-    // Echoed back as pay_load in the paid webhook (tells us WHICH plan or
-    // WHICH one-time product + requestId was paid, and for WHICH uid).
+    // Echoed back as pay_load in the paid webhook (WHAT was paid + for WHOM).
     payLoad,
     redirectionUrls: {
       successUrl: `${redirectBase}?payment=success`,
