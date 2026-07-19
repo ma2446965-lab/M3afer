@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from "react";
 import { db, storage } from "@/lib/firebase";
 import { parseYouTubeId, LECTURES_COL, PURCHASES_COL } from "@/lib/lectures";
+import { COURSES_COL } from "@/lib/courses";
 import {
   addDoc,
   collection,
@@ -40,6 +41,7 @@ const safeName = (n: string) => n.replace(/[^\w.\-ء-ي]/g, "_").slice(-60);
 
 export default function LecturesManager() {
   const [subjects, setSubjects] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
   const [lectures, setLectures] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
@@ -49,6 +51,7 @@ export default function LecturesManager() {
   // form state
   const [title, setTitle] = useState("");
   const [subjectId, setSubjectId] = useState("");
+  const [formCourseId, setFormCourseId] = useState("");
   const [teacherName, setTeacherName] = useState("");
   const [description, setDescription] = useState("");
   const [durationMin, setDurationMin] = useState("");
@@ -69,8 +72,24 @@ export default function LecturesManager() {
         const snap = await getDocs(collection(db, "subjects"));
         setSubjects(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })));
       } catch {}
+      try {
+        const cSnap = await getDocs(collection(db, COURSES_COL));
+        setCourses(cSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })));
+      } catch {}
     })();
-  }, []);
+  }, [tick]);
+
+  /** Sync the denormalized lectureCount on a course after membership changes. */
+  const recountCourse = async (courseId: string) => {
+    if (!courseId) return;
+    try {
+      const snap = await getCountFromServer(query(collection(db, LECTURES_COL), where("courseId", "==", courseId)));
+      await updateDoc(doc(db, COURSES_COL, courseId), {
+        lectureCount: snap.data().count,
+        updatedAt: new Date().toISOString()
+      });
+    } catch {}
+  };
 
   useEffect(() => {
     const q = query(collection(db, LECTURES_COL), orderBy("createdAt", "desc"));
@@ -98,6 +117,7 @@ export default function LecturesManager() {
 
   const resetForm = () => {
     setTitle(""); setSubjectId(""); setTeacherName(""); setDescription("");
+    setFormCourseId("");
     setDurationMin(""); setPriceEgp("25"); setIsPreview(false); setPublished(true);
     setVideoUrl(""); setThumbFile(null); setPdfFile(null); setFormErr("");
   };
@@ -118,6 +138,7 @@ export default function LecturesManager() {
         description: description.trim() || null,
         subjectId,
         subjectName: subj.name || "",
+        courseId: formCourseId || "",
         teacherName: teacherName.trim() || subj.teacherName || null,
         durationMin: durationMin ? Number(durationMin) || null : null,
         priceEgp: price,
@@ -145,6 +166,7 @@ export default function LecturesManager() {
         notesPdfPath,
         updatedAt: new Date().toISOString()
       });
+      if (formCourseId) await recountCourse(formCourseId);
       resetForm();
       setShowForm(false);
     } catch (e: any) {
@@ -183,8 +205,21 @@ export default function LecturesManager() {
     if (!confirm(`حذف «${l.title}»؟ (${count} مشتري — مشترينهم هيحتفظوا بسجلاتهم)`)) return;
     try {
       await deleteDoc(doc(db, LECTURES_COL, l.id));
+      if (l.courseId) await recountCourse(l.courseId);
     } catch (e: any) {
       setErr(e?.message || "فشل الحذف");
+    }
+  };
+
+  const reassignCourse = async (l: any, courseId: string) => {
+    const old = l.courseId || "";
+    try {
+      await updateDoc(doc(db, LECTURES_COL, l.id), { courseId });
+      if (old && old !== courseId) await recountCourse(old);
+      if (courseId && courseId !== old) await recountCourse(courseId);
+      setTick((t) => t + 1); // refresh the courses dropdown too
+    } catch (e: any) {
+      setErr(e?.message || "فشل تغيير الكورس");
     }
   };
 
@@ -213,6 +248,12 @@ export default function LecturesManager() {
             </select>
             <input value={teacherName} onChange={(e) => setTeacherName(e.target.value)} placeholder="اسم المدرّس" className="p-2.5 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm" />
           </div>
+          <select value={formCourseId} onChange={(e) => setFormCourseId(e.target.value)} className="w-full p-2.5 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm">
+            <option value="">بدون كورس (محاضرة مستقلة)</option>
+            {courses.map((c) => (
+              <option key={c.id} value={c.id}>📦 {c.title}{subjectId && c.subjectId !== subjectId ? " ⚠️ مادة مختلفة" : ""}</option>
+            ))}
+          </select>
           <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="وصف قصير (يظهر تحت الفيديو)" className="w-full p-2.5 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm resize-none" />
           <div className="grid grid-cols-3 gap-2">
             <input value={durationMin} onChange={(e) => setDurationMin(e.target.value)} type="number" min={1} placeholder="المدة (دقيقة)" className="p-2.5 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm" />
@@ -259,6 +300,13 @@ export default function LecturesManager() {
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="font-bold text-sm flex-1 min-w-[140px]">{l.title}</p>
                 <span className="text-[10px] bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 px-2 py-0.5 rounded-full">{l.subjectName}</span>
+                {l.courseId ? (
+                  <span className="text-[10px] bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-300 px-2 py-0.5 rounded-full font-bold">
+                    📦 {courses.find((c) => c.id === l.courseId)?.title || "كورس"}
+                  </span>
+                ) : (
+                  <span className="text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full font-bold">بدون كورس</span>
+                )}
                 {l.isFreePreview && <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full flex items-center gap-1"><Gift size={10} /> معاينة</span>}
                 <label className="text-[11px] flex items-center gap-1 font-bold text-gray-500 cursor-pointer">
                   <input type="checkbox" checked={l.published !== false} onChange={(e) => patch(l.id, { published: e.target.checked })} className="accent-indigo-500" /> منشورة
@@ -280,6 +328,17 @@ export default function LecturesManager() {
                   />
                   <span className="text-gray-400">ج.م</span>
                 </div>
+                <select
+                  value={l.courseId || ""}
+                  onChange={(e) => reassignCourse(l, e.target.value)}
+                  title="الكورس التابعة له المحاضرة"
+                  className="text-[11px] p-1.5 rounded-lg border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 max-w-[150px]"
+                >
+                  <option value="">بدون كورس</option>
+                  {courses.map((c) => (
+                    <option key={c.id} value={c.id}>📦 {c.title}</option>
+                  ))}
+                </select>
                 <button onClick={() => loadStats(l.id)} className="text-[11px] bg-gray-100 dark:bg-gray-700 px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-1 text-gray-600 dark:text-gray-300">
                   <BarChart3 size={12} />
                   {st === "loading"

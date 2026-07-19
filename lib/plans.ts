@@ -136,13 +136,18 @@ export const LECTURE_BUNDLE = {
   /** 20% off the sum of the subject's paid lectures */
   discountPct: 0.2
 } as const;
+// Whole-COURSE bundle ("buy the course, get all its lectures granted").
+// Price is server-recomputed from member lectures × course.discountPct —
+// see lib/courses.ts computeCourseQuote. Grants fan out per-lecture.
+export const COURSE_PRODUCT = { kind: "course" } as const;
 
 /** pay_load discrimination: legacy subscription invoices carry NO `kind`. */
 export type PayLoadKind =
   | "plan"
   | typeof PLANNER_PRODUCT.kind
   | typeof LECTURE_PRODUCT.kind
-  | typeof LECTURE_BUNDLE.kind;
+  | typeof LECTURE_BUNDLE.kind
+  | typeof COURSE_PRODUCT.kind;
 
 function fieldOf(raw: unknown, key: string): unknown {
   if (raw && typeof raw === "object") return (raw as any)[key];
@@ -172,6 +177,7 @@ export function payLoadKind(raw: unknown): PayLoadKind {
   if (k === PLANNER_PRODUCT.kind) return PLANNER_PRODUCT.kind;
   if (k === LECTURE_PRODUCT.kind) return LECTURE_PRODUCT.kind;
   if (k === LECTURE_BUNDLE.kind) return LECTURE_BUNDLE.kind;
+  if (k === COURSE_PRODUCT.kind) return COURSE_PRODUCT.kind;
   return "plan";
 }
 
@@ -188,4 +194,9 @@ export function lectureIdFromPayLoad(raw: unknown): string | undefined {
 /** subject id travels in payLoad for whole-subject bundle purchases. */
 export function subjectIdFromPayLoad(raw: unknown): string | undefined {
   return strField(raw, "subjectId");
+}
+
+/** course id travels in payLoad for whole-course purchases. */
+export function courseIdFromPayLoad(raw: unknown): string | undefined {
+  return strField(raw, "courseId");
 }

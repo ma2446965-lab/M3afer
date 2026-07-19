@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import {
   Home,
   Clapperboard,
+  Package,
   MessagesSquare,
   NotebookPen,
   BookOpen,
@@ -31,6 +32,7 @@ import {
 const ICONS: Record<IconKey, any> = {
   home: Home,
   lectures: Clapperboard,
+  courses: Package,
   messages: MessagesSquare,
   planner: NotebookPen,
   library: BookOpen,

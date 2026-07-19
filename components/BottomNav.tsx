@@ -21,21 +21,25 @@ export default function BottomNav() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
-      <div className="mx-3 mb-3 bg-white/90 dark:bg-gray-800/90 glass rounded-[28px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-white/20 dark:border-gray-700/50 px-2 py-2 flex justify-around items-center backdrop-blur-xl">
+      {/* mb uses the iOS safe-area when larger than 0.75rem so the pill never
+          sits under the home indicator / gets clipped at the screen edge.
+          Items: px-4 (not px-5) + NO scale on the active item (scale-105 used
+          to paint the active circle over its neighbours at ≤390px). */}
+      <div className="mx-3 mb-[max(0.75rem,env(safe-area-inset-bottom,0px))] bg-white/90 dark:bg-gray-800/90 glass rounded-[28px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-white/20 dark:border-gray-700/50 px-2 py-2 flex justify-between items-center backdrop-blur-xl">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center justify-center px-5 py-2.5 rounded-full transition-all duration-300 ${
+              className={`flex flex-col items-center justify-center px-4 py-2.5 rounded-full transition-all duration-300 ${
                 isActive
-                  ? "bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-lg shadow-sky-500/25 scale-105"
+                  ? "bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-lg shadow-sky-500/25"
                   : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
               }`}
             >
               <item.icon size={20} className={`${isActive ? "mb-0.5" : "mb-1"}`} />
-              <span className={`text-[11px] font-semibold ${isActive ? "block" : "hidden sm:block"}`}>
+              <span className={`text-[11px] font-semibold whitespace-nowrap ${isActive ? "block" : "hidden sm:block"}`}>
                 {language === "ar" ? item.labelAr : item.labelEn}
               </span>
             </Link>

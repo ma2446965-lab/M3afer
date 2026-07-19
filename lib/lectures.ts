@@ -4,6 +4,7 @@
 export interface LectureLike {
   id?: string;
   subjectId?: string;
+  courseId?: string;
   priceEgp?: number;
   isFreePreview?: boolean;
   published?: boolean;

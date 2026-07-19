@@ -7,6 +7,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { db, storage } from "@/lib/firebase";
 import { LECTURE_PRODUCT } from "@/lib/plans";
 import { isFreeLecture, parseYouTubeId, purchaseId, LECTURES_COL, PURCHASES_COL } from "@/lib/lectures";
+import { COURSES_COL } from "@/lib/courses";
 import { doc, getDoc } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 import {
@@ -21,7 +22,8 @@ import {
   BadgeCheck,
   ArrowRight,
   Gift,
-  LogIn
+  LogIn,
+  Package
 } from "lucide-react";
 
 function PaymentBanner() {
@@ -66,6 +68,8 @@ function LectureWatchInner() {
   const lectureId = String(params?.id || "");
 
   const [lecture, setLecture] = useState<any | null>(null);
+  // Published parent course title for the cross-link chip (null = standalone).
+  const [courseTitle, setCourseTitle] = useState<string | null>(null);
   const [media, setMedia] = useState<any | null>(null);
   const [owned, setOwned] = useState(false);
   const [phase, setPhase] = useState<"loading" | "ready" | "locked" | "missing">("loading");
@@ -87,6 +91,18 @@ function LectureWatchInner() {
       }
       const lec = { id: lecSnap.id, ...(lecSnap.data() as any) };
       setLecture(lec);
+      // Cross-link: if the lecture belongs to a published course, resolve the
+      // course title for the "📦 جزء من كورس" chip (public read, non-fatal).
+      if (lec.courseId) {
+        try {
+          const cSnap = await getDoc(doc(db, COURSES_COL, lec.courseId));
+          setCourseTitle(cSnap.exists() && cSnap.data().published !== false ? String(cSnap.data().title || "") : null);
+        } catch {
+          setCourseTitle(null);
+        }
+      } else {
+        setCourseTitle(null);
+      }
       if (!user) {
         // Signed-out: skip the media probe entirely → locked card with a
         // "sign in to buy/watch" CTA.
@@ -215,6 +231,14 @@ function LectureWatchInner() {
                 {lecture.teacherName && <span>👨‍🏫 {lecture.teacherName}</span>}
                 {!!lecture.durationMin && <span className="flex items-center gap-1"><Clock3 size={12} /> {lecture.durationMin} دقيقة</span>}
                 {lecture.subjectName && <span className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 px-2 py-0.5 rounded-full">{lecture.subjectName}</span>}
+                {lecture.courseId && courseTitle && (
+                  <Link
+                    href={`/courses/${lecture.courseId}`}
+                    className="bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-300 px-2 py-0.5 rounded-full flex items-center gap-1 font-bold hover:bg-violet-100 dark:hover:bg-violet-900/50 transition"
+                  >
+                    <Package size={11} /> من كورس: {courseTitle} — شوف الكورس كامل بخصم ←
+                  </Link>
+                )}
                 {owned && <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full flex items-center gap-1"><BadgeCheck size={11} /> عندك ✅</span>}
                 {free && lecture?.isFreePreview && <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full flex items-center gap-1"><Gift size={11} /> معاينة مجانية</span>}
               </p>
