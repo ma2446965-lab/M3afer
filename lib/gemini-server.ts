@@ -2,8 +2,23 @@
 // it uses the private GEMINI_API_KEY and must only run inside app/api/* route handlers.
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const apiKey = process.env.GEMINI_API_KEY || "";
-const genAI = new GoogleGenerativeAI(apiKey);
+const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
+const genAI = new GoogleGenerativeAI(apiKey || "missing");
+
+// Google retires old model ids (gemini-1.5-flash 404s since Sep-2025), so we
+// walk this chain until one answers. Override the first entry via GEMINI_MODEL.
+const MODEL_CHAIN = [
+  process.env.GEMINI_MODEL,
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
+  "gemini-2.0-flash-lite",
+].filter((m): m is string => !!m).filter((m, i, a) => a.indexOf(m) === i);
+
+// Per-instance cache: once a model answers, stick to it (skips dead ones).
+let resolvedModel: string | null = null;
+
+const isModelGone = (e: any) =>
+  /404|not found|not_found|is not supported/i.test(String(e?.message || e));
 
 export type AIPersona = "ing.Mohamed" | "Dr.Basmala";
 
@@ -45,18 +60,32 @@ export async function generateWithGemini(
   track: string,
   subject?: string
 ) {
-  try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const systemPrompt = getSystemPrompt(persona, grade, track, subject);
-    const fullPrompt = `${systemPrompt}\n\nسؤال الطالب / المحتوى المطلوب معالجته:\n${prompt}\n\nردك:`;
-
-    const result = await model.generateContent(fullPrompt);
-    const response = await result.response;
-    return response.text();
-  } catch (error) {
-    console.error("Gemini Error:", error);
-    throw new Error("gemini_request_failed");
+  if (!apiKey) {
+    console.error("Gemini Error: GEMINI_API_KEY is not set on the server");
+    throw new Error("ai_not_configured");
   }
+  const systemPrompt = getSystemPrompt(persona, grade, track, subject);
+  const fullPrompt = [systemPrompt, `سؤال الطالب / المحتوى المطلوب معالجته:\n${prompt}`, "ردك:"].join("\n\n");
+
+  // Try the remembered-good model first, then walk the chain. A 404/
+  // "not found" means the model id was retired — hop to the next one.
+  const order = [resolvedModel, ...MODEL_CHAIN].filter((m): m is string => !!m)
+    .filter((m, i, a) => a.indexOf(m) === i);
+  let lastErr: any = null;
+  for (const modelName of order) {
+    try {
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent(fullPrompt);
+      const response = await result.response;
+      resolvedModel = modelName;
+      return response.text();
+    } catch (error: any) {
+      lastErr = error;
+      console.error(`Gemini Error (model=${modelName}):`, String(error?.message || error).slice(0, 300));
+      if (!isModelGone(error)) break; // quota/auth/safety → failing over won't help
+    }
+  }
+  throw new Error(/api.key|API_KEY|permission|403/i.test(String(lastErr?.message || "")) ? "ai_key_invalid" : "gemini_request_failed");
 }
 
 export async function generateSummary(pdfText: string, grade: string, track: string, subject: string, length: "short" | "medium" | "long" = "medium") {

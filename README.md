@@ -122,3 +122,5 @@ Arabic (Egyptian) default, English switcher in hamburger, dir attribute toggled.
 
 ---
 Made with ❤️ for Thanaweya Amma students
+
+- 🚀 **Launch-readiness batch**: Gemini switched to live model ids (env `GEMINI_MODEL` → gemini-2.5-flash → 2.0-flash → 2.0-flash-lite failover; `gemini-1.5-flash` was retired by Google and 404s), distinct `ai_not_configured`/`ai_key_invalid` 503s surfaced as friendly Arabic states client-side, real newlines in prompts. PDF library now does REAL text extraction client-side (`lib/pdf-text.ts` + self-hosted `/pdf.worker.min.mjs`) instead of mock text; per-output allSettled with partial-success messages, friendly scanned-PDF state. **Critical payment fix**: Fatorak webhookUrl typo (`/api/fatorak-webhook_json` → `/api/fatorak-webhook`) — would have broken ALL confirmations post-payment — plus `provider_inactive` reason surfaced for the exact 'inactive vendor' case, and courses pages aligned to the existing `payment=failed` state convention.

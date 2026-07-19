@@ -245,7 +245,9 @@ export async function POST(req: NextRequest) {
       successUrl: `${redirectBase}?payment=success`,
       failUrl: `${redirectBase}?payment=failed`,
       pendingUrl: `${redirectBase}?payment=pending`,
-      webhookUrl: `${origin}/api/fatorak-webhook_json`
+      // MUST stay exactly /api/fatorak-webhook — a typo here silently breaks
+      // ALL payment confirmations after the customer pays.
+      webhookUrl: `${origin}/api/fatorak-webhook`
     },
     sendEmail: false,
     sendSMS: false
@@ -258,9 +260,19 @@ export async function POST(req: NextRequest) {
       data?.data?.url || data?.data?.payment_url || data?.url || undefined;
     if (!res.ok || !url) {
       console.error("Fatorak createInvoiceLink failed", { status: res.status, mode, response: data });
-      return err(502, "تعذر إنشاء رابط الدفع — حاول كمان شوية", "create_invoice_failed", {
-        upstream: { status: res.status, body: excerpt(data) }
-      });
+      // Surface a distinct reason when the vendor account itself is inactive
+      // (exact production case) so support/devs see it instantly instead of a
+      // generic upstream failure.
+      const upstreamMsg = JSON.stringify(data || "");
+      const providerInactive = /invalid token|inactive vendor/i.test(upstreamMsg);
+      return err(
+        502,
+        providerInactive
+          ? "بوابة الدفع جاري تفعيلها حاليًا — جرب كمان شوية، والدعم معاك لو حابب ⏳"
+          : "تعذر إنشاء رابط الدفع — حاول كمان شوية",
+        providerInactive ? "provider_inactive" : "create_invoice_failed",
+        { upstream: { status: res.status, body: excerpt(data) } }
+      );
     }
     return NextResponse.json({
       url,

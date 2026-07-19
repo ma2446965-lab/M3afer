@@ -37,7 +37,7 @@ function PaymentBanner() {
       </div>
     );
   }
-  if (state === "fail") {
+  if (state === "failed") {
     return (
       <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 p-3.5 rounded-2xl text-sm font-bold">
         ⚠️ الدفع ما تمش — مفيش فلوس اتخصمت. جرب تاني براحتك.
