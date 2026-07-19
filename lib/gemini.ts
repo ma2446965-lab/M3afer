@@ -23,6 +23,10 @@ async function callGeminiApi(payload: Record<string, any>) {
   if (!res.ok) {
     if (res.status === 429) throw new Error("rate_limited");
     if (res.status === 401) throw new Error("not_authenticated");
+    if (res.status === 503) {
+      const j = await res.json().catch(() => null);
+      throw new Error(j?.error === "ai_key_invalid" ? "ai_key_invalid" : "ai_not_configured");
+    }
     throw new Error("gemini_request_failed");
   }
   return res.json();
@@ -38,8 +42,12 @@ export async function generateWithGemini(
   try {
     const { text } = await callGeminiApi({ action: "chat", prompt, persona, grade, track, subject });
     return text as string;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini Error:", error);
+    if (error?.message === "rate_limited")
+      return "⏳ بعتلي رسايل كتير ورا بعض — استنى دقيقه وكملني براحتك.";
+    if (error?.message === "ai_not_configured" || error?.message === "ai_key_invalid")
+      return "🔧 المساعد الذكي لسه بيتظبط من عندنا — جرب كمان شوية وهتلاقيه شغال.";
     return "⚠️ حصلت مشكلة في الاتصال، حاول تاني كمان شوية.";
   }
 }

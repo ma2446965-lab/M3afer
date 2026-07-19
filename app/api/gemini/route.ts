@@ -88,8 +88,12 @@ export async function POST(req: NextRequest) {
       default:
         return NextResponse.json({ error: "unknown_action" }, { status: 400 });
     }
-  } catch (e) {
+  } catch (e: any) {
     console.error("Gemini API route error:", e);
+    if (e?.message === "ai_not_configured")
+      return NextResponse.json({ error: "ai_not_configured" }, { status: 503 });
+    if (e?.message === "ai_key_invalid")
+      return NextResponse.json({ error: "ai_key_invalid" }, { status: 503 });
     return NextResponse.json({ error: "gemini_request_failed" }, { status: 502 });
   }
 }

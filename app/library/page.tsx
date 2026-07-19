@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getSubjectsForGradeTrack } from "@/lib/subjects";
 import { Upload, FileText, Sparkles, Brain, Headphones, Search, Filter } from "lucide-react";
 import { generateSummary, generateQuiz, generateFlashcards, generateAudioScript } from "@/lib/gemini";
+import { extractPdfText } from "@/lib/pdf-text";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage, db } from "@/lib/firebase";
 import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
@@ -18,6 +19,8 @@ interface ProcessedPDF {
   quiz?: any;
   flashcards?: any;
   audioScript?: string;
+  /** how many of the 4 AI outputs failed to generate (0 = all good) */
+  aiFailed?: number;
   status: "processing" | "done";
 }
 
@@ -36,6 +39,7 @@ export default function LibraryPage() {
   const [activeTab, setActiveTab] = useState<"summary" | "quiz" | "flashcards" | "audio">("summary");
   const [selectedPdf, setSelectedPdf] = useState<ProcessedPDF | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [processErr, setProcessErr] = useState("");
 
   const subjects = profile ? getSubjectsForGradeTrack(profile.grade as any, profile.track as any) : [];
 
@@ -46,17 +50,27 @@ export default function LibraryPage() {
   const handleUpload = async () => {
     if (!file || !selectedSubject || !profile || !user) return;
     setIsProcessing(true);
+    setProcessErr("");
 
     const subjectObj = subjects.find(s => s.id === selectedSubject);
-    
-    // Simulate PDF text extraction (in real app use pdfjs-dist)
-    const mockPdfText = `محتوى ملف ${file.name} لمادة ${subjectObj?.nameAr} - ${profile.grade} - ${profile.track}. هذا نص تجريبي يحاكي محتوى ملزمة ثانوية عامة حقيقية تشمل تعريفات وقوانين وأمثلة محلولة وأسئلة تراكمية من كتاب الوزارة وبنك المعرفة المصري.`;
 
     try {
-      // Upload to Firebase Storage (scoped to user via rules)
+      // 1) REAL text extraction from the uploaded PDF (client-side pdfjs).
+      let pdfText = "";
+      try {
+        pdfText = await extractPdfText(await file.arrayBuffer());
+      } catch (e) {
+        console.error("pdf extract failed", e);
+      }
+      if (pdfText.length < 60) {
+        setProcessErr("مقدرناش نقرأ نص من الملف ده — غالبًا سكانر/صور مش PDF نصي. جرب نسخة نصية أو PDF من مصدر واضح 📄");
+        return;
+      }
+
+      // 2) Archive the file in Storage (best-effort — never blocks the AI flow).
       const storageRef = ref(storage, `users/${user.uid}/pdfs/${Date.now()}_${file.name}`);
-      await uploadBytes(storageRef, file).catch(() => console.log("Storage upload skipped in demo"));
-      
+      await uploadBytes(storageRef, file).catch(() => {});
+
       const newPdf: ProcessedPDF = {
         id: Date.now().toString(),
         fileName: file.name,
@@ -68,22 +82,34 @@ export default function LibraryPage() {
 
       setPdfs(prev => [newPdf, ...prev]);
 
-      // Generate AI content
-      const [summary, quizData, flashcardsData, audioScript] = await Promise.all([
-        generateSummary(mockPdfText, profile.grade || "", profile.track || "", subjectObj?.nameAr || "", "medium"),
-        generateQuiz(mockPdfText, profile.grade || "", profile.track || "", subjectObj?.nameAr || "", 5),
-        generateFlashcards(mockPdfText, profile.grade || "", profile.track || "", subjectObj?.nameAr || ""),
-        generateAudioScript(mockPdfText, profile.grade || "", profile.track || "", subjectObj?.nameAr || "")
+      // 3) AI generation on the REAL text — all-settled so one weak piece
+      //    (e.g. audio script on a long doc) never kills the rest.
+      const grade = profile.grade || "", track = profile.track || "", subj = subjectObj?.nameAr || "";
+      const [summaryR, quizR, flashR, audioR] = await Promise.allSettled([
+        generateSummary(pdfText, grade, track, subj, "medium"),
+        generateQuiz(pdfText, grade, track, subj, 5),
+        generateFlashcards(pdfText, grade, track, subj),
+        generateAudioScript(pdfText, grade, track, subj)
       ]);
+      const took = (r: PromiseSettledResult<any>) => (r.status === "fulfilled" ? r.value : null);
+      const failed = [summaryR, quizR, flashR, audioR].filter(r => r.status === "rejected").length;
 
       const completedPdf: ProcessedPDF = {
         ...newPdf,
-        summary,
-        quiz: quizData,
-        flashcards: flashcardsData,
-        audioScript,
+        summary: took(summaryR) || undefined,
+        quiz: took(quizR) || undefined,
+        flashcards: took(flashR) || undefined,
+        audioScript: took(audioR) || undefined,
+        aiFailed: failed,
         status: "done"
       };
+
+      if (failed === 4) {
+        // Everything failed (most likely AI key/config) — keep the file but say so.
+        setProcessErr("الملف اترفع بس الـ AI مش راضي يولّد دلوقتي — تأكد إن مفتاح Gemini متظبط وجرّب تاني من الملف ⚠️");
+      } else if (failed > 0) {
+        setProcessErr("بعض مخرجات الـ AI متكتملتش — الملخص والباقي ظاهر تحت عادي ✅");
+      }
 
       setPdfs(prev => prev.map(p => p.id === newPdf.id ? completedPdf : p));
       setSelectedPdf(completedPdf);
@@ -92,7 +118,7 @@ export default function LibraryPage() {
 
     } catch (e) {
       console.error(e);
-      alert("حصل خطأ في المعالجة، حاول تاني");
+      setProcessErr("حصل خطأ غير متوقع في المعالجة — حاول تاني");
     } finally {
       setIsProcessing(false);
     }
@@ -151,11 +177,17 @@ export default function LibraryPage() {
               disabled={!file || !selectedSubject || isProcessing}
               className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-3 rounded-xl font-bold disabled:opacity-50 hover:scale-[1.01] transition"
             >
-              {isProcessing ? "جاري المعالجة بـ AI... 🧠" : "رفع ومعالجة بالـ AI ✨"}
+              {isProcessing ? "بنقرأ الملف ونلخصه بـ AI... 🧠" : "رفع ومعالجة بالـ AI ✨"}
             </button>
-            
+
+            {!!processErr && (
+              <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 p-3 rounded-xl leading-relaxed">
+                {processErr}
+              </p>
+            )}
+
             <p className="text-[11px] text-center text-gray-400">
-              هيتم توليد: ملخص مراجعة نهائية + كويز بنظام الوزارة + فلاش كاردز + سكريبت بودكاست
+              بنقرأ الـ PDF نفسه ونطلعلك: ملخص مراجعة نهائية + كويز بنظام الوزارة + فلاش كاردز + سكريبت بودكاست
             </p>
           </div>
         </div>
@@ -237,7 +269,7 @@ export default function LibraryPage() {
               {activeTab === "summary" && (
                 <div className="prose dark:prose-invert max-w-none">
                   <div className="whitespace-pre-wrap text-sm leading-relaxed bg-amber-50/50 dark:bg-amber-900/10 p-4 rounded-xl border border-amber-100 dark:border-amber-900/20">
-                    {selectedPdf.summary || "جاري توليد الملخص..."}
+                    {selectedPdf.summary || (selectedPdf.status === "done" ? "الملخص ده مش متوفر للملف ده — جرب رفع نسخة أوضح أو كمان شوية." : "جاري توليد الملخص...")}
                   </div>
                 </div>
               )}
@@ -271,13 +303,10 @@ export default function LibraryPage() {
               {activeTab === "audio" && (
                 <div>
                   <div className="bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-sky-900/10 dark:to-indigo-900/10 p-4 rounded-xl border border-sky-100 dark:border-sky-900/20">
-                    <p className="text-xs font-bold text-sky-700 dark:text-sky-300 mb-2">🎙️ سكريبت بودكاست (NotebookLM Style) - قريباً TTS</p>
-                    <p className="text-sm whitespace-pre-wrap leading-relaxed">{selectedPdf.audioScript || "جاري توليد السكريبت..."}</p>
+                    <p className="text-xs font-bold text-sky-700 dark:text-sky-300 mb-2">🎙️ سكريبت بودكاست (NotebookLM Style) — اقرأه بنفسك أو اسمعه لحد يشرحهولك</p>
+                    <p className="text-sm whitespace-pre-wrap leading-relaxed">{selectedPdf.audioScript || (selectedPdf.status === "done" ? "السكريبت ده مش متوفر للملف ده حاليًا." : "جاري توليد السكريبت...")}</p>
                   </div>
-                  <div className="mt-4 bg-gray-900 text-white p-3 rounded-xl text-center">
-                    <p className="text-xs">🔊 ميزة تحويل النص لصوت قادمة في Premium Plan</p>
-                    <button className="mt-2 bg-white text-gray-900 px-4 py-1.5 rounded-full text-xs font-bold">جرب الآن</button>
-                  </div>
+                  <p className="mt-3 text-[11px] text-center text-gray-400">تحويل السكريبت لصوت فعلي جاي في تحديث قريب 🔊</p>
                 </div>
               )}
             </div>
