@@ -20,7 +20,8 @@ import {
   AlertTriangle,
   BadgeCheck,
   ArrowRight,
-  Gift
+  Gift,
+  LogIn
 } from "lucide-react";
 
 function PaymentBanner() {
@@ -72,12 +73,10 @@ function LectureWatchInner() {
   const [err, setErr] = useState("");
   const [confirming, setConfirming] = useState(false);
 
-  useEffect(() => {
-    if (!loading && !user) router.replace("/auth/login");
-  }, [loading, user, router]);
-
+  // Guests can open the page (title/price/description are public) — the
+  // private-media read below is what actually gates watching/purchasing.
   const load = useCallback(async () => {
-    if (!user || !lectureId) return;
+    if (!lectureId) return;
     setPhase("loading");
     setErr("");
     try {
@@ -88,6 +87,14 @@ function LectureWatchInner() {
       }
       const lec = { id: lecSnap.id, ...(lecSnap.data() as any) };
       setLecture(lec);
+      if (!user) {
+        // Signed-out: skip the media probe entirely → locked card with a
+        // "sign in to buy/watch" CTA.
+        setOwned(false);
+        setMedia(null);
+        setPhase("locked");
+        return;
+      }
       // Purchase doc (for the ✅ badge) — access itself is decided by the
       // private-media read below (rules: owner/admin/free only).
       try {
@@ -138,7 +145,11 @@ function LectureWatchInner() {
   }, []);
 
   const buy = async () => {
-    if (!user || paying) return;
+    if (!user) {
+      router.push(`/auth/login?next=${encodeURIComponent(`/lectures/${lectureId}`)}`);
+      return;
+    }
+    if (paying) return;
     setPaying(true);
     setErr("");
     try {
@@ -157,7 +168,7 @@ function LectureWatchInner() {
     }
   };
 
-  if (loading || !user) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] dark:bg-gray-900">
         <Loader2 className="animate-spin text-indigo-500" size={32} />
@@ -234,22 +245,44 @@ function LectureWatchInner() {
                   <Lock size={26} />
                 </div>
                 <div>
-                  <p className="font-bold text-lg">المحاضرة دي مدفوعة 🔒</p>
-                  <p className="text-xs text-gray-400 mt-1">اشتريها مرة واحدة وتفضل معاك للأبد — وشوف الملاحظات PDF كمان</p>
+                  <p className="font-bold text-lg">
+                    {!user && free ? "معاينة مجانية — سجّل وشوفها 🎁" : "المحاضرة دي مدفوعة 🔒"}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {free
+                      ? "المعاينة دي مجانية تمامًا — محتاجة بس حساب عشان تشغّلها"
+                      : "اشتريها مرة واحدة وتفضل معاك للأبد — وشوف الملاحظات PDF كمان"}
+                  </p>
                 </div>
                 <div className="flex items-baseline justify-center gap-2">
-                  <span className="text-4xl font-black bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">{lecture.priceEgp}</span>
-                  <span className="text-gray-500 font-bold">ج.م</span>
+                  {free ? (
+                    <span className="text-4xl font-black bg-gradient-to-r from-emerald-500 to-teal-600 bg-clip-text text-transparent">مجانًا</span>
+                  ) : (
+                    <>
+                      <span className="text-4xl font-black bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">{lecture.priceEgp}</span>
+                      <span className="text-gray-500 font-bold">ج.م</span>
+                    </>
+                  )}
                 </div>
                 {err && <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-xl">{err}</p>}
-                <button
-                  onClick={buy}
-                  disabled={paying}
-                  className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:opacity-95 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2"
-                >
-                  {paying ? <Loader2 size={18} className="animate-spin" /> : <CreditCard size={18} />}
-                  {paying ? "بنجهز لينك الدفع..." : `افتح المحاضرة — ${lecture.priceEgp} ج.م`}
-                </button>
+                {!user ? (
+                  <Link
+                    href={`/auth/login?next=${encodeURIComponent(`/lectures/${lectureId}`)}`}
+                    className="w-full bg-gradient-to-r from-sky-500 to-indigo-600 hover:opacity-95 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2"
+                  >
+                    <LogIn size={18} />
+                    سجّل دخولك عشان {free ? "تشوف المعاينة" : "تشتري المحاضرة"}
+                  </Link>
+                ) : (
+                  <button
+                    onClick={buy}
+                    disabled={paying}
+                    className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:opacity-95 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2"
+                  >
+                    {paying ? <Loader2 size={18} className="animate-spin" /> : <CreditCard size={18} />}
+                    {paying ? "بنجهز لينك الدفع..." : `افتح المحاضرة — ${lecture.priceEgp} ج.م`}
+                  </button>
+                )}
                 <Link href="/lectures" className="block text-xs text-indigo-500 font-bold">
                   أو وفر مع باقة المادة كاملة (خصم 20%) ←
                 </Link>

@@ -1,16 +1,20 @@
 "use client";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { sanitizeNextPath } from "@/lib/nav";
 
-export default function LoginPage() {
+function LoginPageInner() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Post-login destination (e.g. back to the lecture a guest tried to buy).
+  const next = sanitizeNextPath(searchParams.get("next"));
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,7 +22,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      router.push("/");
+      router.push(next);
     } catch (err: any) {
       setError(err.message.includes("invalid-credential") ? "الإيميل أو الباسورد غلط" : err.message);
     } finally {
@@ -69,7 +73,7 @@ export default function LoginPage() {
           </form>
 
           <p className="text-center text-sm text-gray-500 mt-6">
-            لسه معندكش حساب؟ <Link href="/auth/signup" className="text-indigo-600 font-bold hover:underline">سجل دلوقتي</Link>
+            لسه معندكش حساب؟ <Link href={`/auth/signup${next !== "/" ? `?next=${encodeURIComponent(next)}` : ""}`} className="text-indigo-600 font-bold hover:underline">سجل دلوقتي</Link>
           </p>
 
           <div className="mt-8 p-3 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-100 dark:border-amber-900/20">
@@ -95,5 +99,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageInner />
+    </Suspense>
   );
 }

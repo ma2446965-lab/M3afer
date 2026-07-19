@@ -67,3 +67,15 @@ export function shouldHideChrome(pathname: string): boolean {
     (p) => pathname === p || pathname.startsWith(p + "/")
   );
 }
+
+/**
+ * Sanitize a `?next=` post-auth redirect target. Only same-origin absolute
+ * paths survive ("/lectures/abc"); anything else — including protocol-relative
+ * "//evil.com" open-redirects — falls back to "/".
+ */
+export function sanitizeNextPath(path?: string | null): string {
+  if (!path) return "/";
+  const p = String(path).trim();
+  if (p.startsWith("/") && !p.startsWith("//")) return p;
+  return "/";
+}
