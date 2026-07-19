@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { Menu, X, Moon, Sun, Languages, CreditCard, MessageCircle, LogOut, Shield, BookOpen, CalendarPlus, CalendarCheck, CalendarDays, Clapperboard, Home, MessagesSquare } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Menu, X, Moon, Sun, Languages, CreditCard, MessageCircle, LogOut, Shield, BookOpen, CalendarPlus, CalendarCheck, CalendarDays, Clapperboard, Home, MessagesSquare, Package } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
@@ -28,7 +29,14 @@ export default function HamburgerMenu() {
         <Menu size={20} />
       </button>
 
-      {open && (
+      {open &&
+        // ⚠️ PORTAL IS MANDATORY HERE: this component is mounted inside the
+        // mobile top bar whose `backdrop-blur-lg` (backdrop-filter) makes the
+        // header the containing block for any `fixed` descendant — without a
+        // portal the whole drawer gets squeezed into the 56px header box
+        // (verified: drawer rendered 332×55, content invisible). Rendering at
+        // document.body restores viewport-based positioning.
+        createPortal(
         <div className="md:hidden fixed inset-0 z-[100] flex">
           {/* backdrop */}
           <div className="flex-1 bg-black/40 backdrop-blur-sm" onClick={() => setOpen(false)} />
@@ -132,6 +140,16 @@ export default function HamburgerMenu() {
                 </div>
               </Link>
 
+              <Link href="/courses" onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                <div className="p-2 bg-violet-50 dark:bg-violet-900/30 rounded-lg text-violet-600 dark:text-violet-400">
+                  <Package size={18} />
+                </div>
+                <div className="flex-1 text-right">
+                  <p className="font-medium text-sm flex items-center gap-2">الكورسات <span className="text-[10px] bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-300 px-1.5 py-0.5 rounded-full font-bold">جديد ✨</span></p>
+                  <p className="text-xs text-gray-500">مسارات كاملة محاضرة ورا محاضرة — بخصم 📦</p>
+                </div>
+              </Link>
+
               <Link href="/messages" onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
                 <div className="p-2 bg-fuchsia-50 dark:bg-fuchsia-900/30 rounded-lg text-fuchsia-600 dark:text-fuchsia-400">
                   <MessagesSquare size={18} />
@@ -211,7 +229,8 @@ export default function HamburgerMenu() {
               <p className="text-[11px] text-gray-400">Meafer.ai v1.0 • صنع بكل حب لطلاب الثانوية العامة ❤️</p>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
