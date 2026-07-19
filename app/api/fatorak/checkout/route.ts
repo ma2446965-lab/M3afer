@@ -24,6 +24,7 @@ import {
   PLANNER_PRODUCT,
   LECTURE_PRODUCT,
   LECTURE_BUNDLE,
+  COURSE_PRODUCT,
   type PlanId
 } from "@/lib/plans";
 import {
@@ -33,6 +34,11 @@ import {
   LECTURES_COL,
   PURCHASES_COL
 } from "@/lib/lectures";
+import {
+  computeCourseQuote,
+  sanitizeDiscountPct,
+  COURSES_COL
+} from "@/lib/courses";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -166,6 +172,44 @@ export async function POST(req: NextRequest) {
     )}%)`;
     payLoad = { uid, kind: LECTURE_BUNDLE.kind, subjectId };
     redirectBase = `${origin}/lectures`;
+  } else if (product === COURSE_PRODUCT.kind) {
+    // ---- One-time: whole course — price server-recomputed from its
+    //      member lectures × the course's discountPct (computeCourseQuote),
+    //      so nothing the client sends can influence the amount. ----
+    mode = COURSE_PRODUCT.kind;
+    const courseId = typeof parsed.courseId === "string" ? parsed.courseId : "";
+    if (!courseId) return err(400, "رقم الكورس ناقص", "missing_course_id");
+
+    let course: any;
+    let quote;
+    try {
+      const [cSnap, lecSnap, ownSnap] = await Promise.all([
+        adminDb.collection(COURSES_COL).doc(courseId).get(),
+        adminDb.collection(LECTURES_COL).where("courseId", "==", courseId).get(),
+        adminDb.collection(PURCHASES_COL).where("studentId", "==", uid).get()
+      ]);
+      course = cSnap.exists ? cSnap.data() : null;
+      const ownedIds = new Set(ownSnap.docs.map((d) => (d.data() as any).lectureId));
+      const lectures = lecSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+      quote = course
+        ? computeCourseQuote(lectures, courseId, ownedIds, sanitizeDiscountPct(course.discountPct))
+        : null;
+    } catch (e: any) {
+      console.error("checkout: course lookup failed", e);
+      return err(500, "تعذر التحقق من الكورس", "course_lookup_failed");
+    }
+    if (!course) return err(404, "الكورس غير موجود", "course_not_found");
+    if (course.published === false) return err(404, "الكورس غير متاح", "course_unpublished");
+    if (!quote) {
+      return err(409, "عندك كل محاضرات الكورس ده بالفعل ✅ — مفيش حاجة متبقية للشراء", "nothing_to_buy");
+    }
+
+    amountEgp = quote.totalEgp;
+    itemName = `كورس: ${String(course.title || "كورس").slice(0, 60)} (${quote.count} محاضرة — خصم ${Math.round(
+      quote.discountPct * 100
+    )}%)`;
+    payLoad = { uid, kind: COURSE_PRODUCT.kind, courseId };
+    redirectBase = `${origin}/courses/${courseId}`;
   } else if (product != null) {
     return err(400, "منتج غير معروف", "unknown_product");
   } else {

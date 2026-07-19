@@ -142,3 +142,31 @@ export function reorderNeighbor(
   if (j < 0 || j >= sortedIds.length) return null;
   return [sortedIds[i], sortedIds[j]];
 }
+
+/** Display state for course cards/detail («عندك 3 من 8» + buy-CTA logic). */
+export interface CourseOwnership {
+  /** published lectures linked to the course */
+  totalLectures: number;
+  ownedCount: number;
+  /** published paid lectures (quotable) */
+  paidCount: number;
+  freeCount: number;
+  allOwned: boolean;
+}
+
+export function courseOwnership(
+  lectures: (LectureLike & { courseId?: string })[],
+  courseId: string,
+  ownedLectureIds: Set<string>
+): CourseOwnership {
+  const inCourse = lectures.filter((l) => !!l && !!l.id && (l.courseId || "") === courseId && l.published !== false);
+  const ownedCount = inCourse.filter((l) => ownedLectureIds.has(l.id as string)).length;
+  const paidCount = inCourse.filter((l) => !isFreeLecture(l)).length;
+  return {
+    totalLectures: inCourse.length,
+    ownedCount,
+    paidCount,
+    freeCount: inCourse.length - paidCount,
+    allOwned: inCourse.length > 0 && ownedCount === inCourse.length
+  };
+}

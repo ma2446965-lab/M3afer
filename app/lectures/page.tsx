@@ -12,6 +12,7 @@ import {
   LECTURES_COL,
   PURCHASES_COL
 } from "@/lib/lectures";
+import { COURSES_COL } from "@/lib/courses";
 import { collection, getDocs, onSnapshot, query, where } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 import {
@@ -77,6 +78,8 @@ function LecturesPageInner() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [lectures, setLectures] = useState<any[]>([]);
+  // courseId → title for the "📦 من كورس: X" chip on cards (public reads).
+  const [courseTitles, setCourseTitles] = useState<Map<string, string>>(new Map());
   const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());
   const [fetching, setFetching] = useState(true);
   const [err, setErr] = useState("");
@@ -97,6 +100,22 @@ function LecturesPageInner() {
           .filter((l) => l.published !== false);
         list.sort((a, b) => (a.order ?? 999) - (b.order ?? 999) || String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
         setLectures(list);
+        // Course chips are best-effort: if the courses rules block isn't
+        // published in the console yet, lectures still list fine and chips
+        // just stay hidden (no page-level failure).
+        getDocs(collection(db, COURSES_COL))
+          .then((cSnap) => {
+            if (cancelled) return;
+            setCourseTitles(
+              new Map(
+                cSnap.docs
+                  .map((d) => ({ id: d.id, ...(d.data() as any) }))
+                  .filter((c) => c.published !== false)
+                  .map((c) => [c.id, String(c.title || "")] as [string, string])
+              )
+            );
+          })
+          .catch(() => {});
         setErr("");
       } catch (e: any) {
         setErr("تعذر تحميل المحاضرات — تأكد إن firestore.rules الجديدة اتنشرت");
@@ -313,6 +332,14 @@ function LecturesPageInner() {
                     {!!l.subjectName && (
                       <span className="inline-block mt-2 text-[10px] bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 px-2 py-0.5 rounded-full">
                         {l.subjectName}
+                      </span>
+                    )}
+                    {/* course chip — visual badge only (the whole card is already
+                        a link to this lecture); the tappable course cross-link
+                        lives on the lecture detail page. */}
+                    {!!l.courseId && courseTitles.has(l.courseId) && (
+                      <span className="inline-flex items-center gap-1 mt-2 ms-1.5 text-[10px] bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-300 px-2 py-0.5 rounded-full font-bold">
+                        <Package size={10} /> من كورس: {courseTitles.get(l.courseId)}
                       </span>
                     )}
                   </div>

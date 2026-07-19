@@ -22,7 +22,9 @@ import {
   PLANNER_PRODUCT,
   LECTURE_PRODUCT,
   LECTURE_BUNDLE,
+  COURSE_PRODUCT,
   computeNewSubscriptionEnd,
+  courseIdFromPayLoad,
   lectureIdFromPayLoad,
   payLoadKind,
   planFromPayLoad,
@@ -31,6 +33,7 @@ import {
   uidFromPayLoad
 } from "@/lib/plans";
 import { isFreeLecture, purchaseId, LECTURES_COL, PURCHASES_COL } from "@/lib/lectures";
+import { COURSES_COL, COURSE_PURCHASES_COL, coursePurchaseId } from "@/lib/courses";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -97,6 +100,7 @@ export async function POST(req: NextRequest) {
   if (kind === PLANNER_PRODUCT.kind) return handlePlannerPaid({ uid, rawPayLoad, paymentRecord });
   if (kind === LECTURE_PRODUCT.kind) return handleLecturePaid({ uid, rawPayLoad, paymentRecord });
   if (kind === LECTURE_BUNDLE.kind) return handleBundlePaid({ uid, rawPayLoad, paymentRecord });
+  if (kind === COURSE_PRODUCT.kind) return handleCoursePaid({ uid, rawPayLoad, paymentRecord });
   return handleSubscriptionPaid({ uid, rawPayLoad, paymentRecord });
 }
 
@@ -161,6 +165,7 @@ async function grantLecture(
     studentId: uid,
     lectureId,
     subjectId: lec?.subjectId ?? null,
+    courseId: lec?.courseId ?? null,
     lectureTitle: lec?.title ?? null,
     priceEgp: typeof lec?.priceEgp === "number" ? lec.priceEgp : null,
     grantedBy: "fatorak-webhook",
@@ -240,6 +245,78 @@ async function handleBundlePaid(args: {
   } catch (e: any) {
     console.error("Fatorak webhook: failed to grant bundle", e);
     return NextResponse.json({ error: "failed to grant bundle" }, { status: 500 });
+  }
+}
+
+// --------------------------------------------------------- whole-course buy
+// FAN-OUT (confirmed model): grant every published+paid lecture of the
+// course in lecturePurchases (idempotent by deterministic doc id) so media
+// access flows through the SAME single ownership collection, then write a
+// coursePurchases audit receipt.
+async function handleCoursePaid(args: {
+  uid: string;
+  rawPayLoad: unknown;
+  paymentRecord: any;
+}): Promise<NextResponse> {
+  const { uid, rawPayLoad, paymentRecord } = args;
+  const courseId = courseIdFromPayLoad(rawPayLoad);
+  if (!courseId) {
+    console.error("Fatorak webhook: course payment without courseId");
+    return NextResponse.json({ error: "missing courseId" }, { status: 400 });
+  }
+  try {
+    const [cSnap, lecSnap] = await Promise.all([
+      adminDb.collection(COURSES_COL).doc(courseId).get(),
+      adminDb.collection(LECTURES_COL).where("courseId", "==", courseId).get()
+    ]);
+    const course = cSnap.exists ? cSnap.data() : null;
+    const eligible = lecSnap.docs
+      .map((d) => ({ id: d.id, ...(d.data() as any) }))
+      .filter((l) => l.published !== false && !isFreeLecture(l));
+    if (eligible.length === 0) {
+      return NextResponse.json({ ok: true, granted: 0, note: "no eligible lectures in course" });
+    }
+    const result = await adminDb.runTransaction(async (tx) => {
+      const cache = new Map<string, any>(eligible.map((l) => [l.id, l]));
+      let granted = 0;
+      const grantedIds: string[] = [];
+      for (const l of eligible) {
+        const r = await grantLecture(tx, uid, l.id, paymentRecord, cache);
+        if (r === "created") {
+          granted++;
+          grantedIds.push(l.id);
+        }
+      }
+      // Audit receipt — deterministic id → webhook retries upsert the same doc.
+      const aRef = adminDb.collection(COURSE_PURCHASES_COL).doc(coursePurchaseId(courseId, uid));
+      const aSnap = await tx.get(aRef);
+      if (!aSnap.exists) {
+        tx.set(aRef, {
+          studentId: uid,
+          courseId,
+          courseTitle: course?.title ?? null,
+          grantedLectureIds: eligible.map((l) => l.id),
+          grantedCount: eligible.length,
+          priceEgpPaid: null, // amount lives in payment.invoiceId ↔ Fatorak dashboard
+          grantedBy: "fatorak-course-webhook",
+          payment: { ...paymentRecord, paidAt: new Date().toISOString() },
+          createdAt: FieldValue.serverTimestamp()
+        });
+      }
+      return { granted, grantedIds, total: eligible.length, receiptExisted: aSnap.exists };
+    });
+    return NextResponse.json({
+      ok: true,
+      kind: COURSE_PRODUCT.kind,
+      courseId,
+      granted: result.granted,
+      grantedIds: result.grantedIds,
+      total: result.total,
+      duplicate: result.granted === 0 && result.receiptExisted
+    });
+  } catch (e: any) {
+    console.error("Fatorak webhook: failed to grant course", e);
+    return NextResponse.json({ error: "failed to grant course" }, { status: 500 });
   }
 }
 
