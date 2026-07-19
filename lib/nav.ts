@@ -5,6 +5,7 @@
 export type IconKey =
   | "home"
   | "lectures"
+  | "messages"
   | "planner"
   | "library"
   | "quizzes"
@@ -27,6 +28,7 @@ export interface AppNavItem {
 export const MAIN_NAV_ITEMS: AppNavItem[] = [
   { href: "/", iconKey: "home", labelAr: "الرئيسية", labelEn: "Home", descAr: "نظرة سريعة على يومك" },
   { href: "/lectures", iconKey: "lectures", labelAr: "المحاضرات", labelEn: "Lectures", descAr: "محاضرات مسجلة تفضل معاك", badgeAr: "جديد ✨" },
+  { href: "/messages", iconKey: "messages", labelAr: "الرسائل", labelEn: "Messages", descAr: "كلم صحابك المشتركين + دعم مِعافر", badgeAr: "جديد ✨" },
   { href: "/planner", iconKey: "planner", labelAr: "جدولي 📅", labelEn: "Planner", descAr: "جدول مذاكرة مخصوص ليك", badgeAr: "جديد ✨" },
   { href: "/library", iconKey: "library", labelAr: "المكتبة والملفات", labelEn: "Library", descAr: "كل الـ PDFs والملخصات" },
   { href: "/quizzes", iconKey: "quizzes", labelAr: "الكويزات", labelEn: "Quizzes", descAr: "اختبر نفسك بأسلوب الوزارة" },
