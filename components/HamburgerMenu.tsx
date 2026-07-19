@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Menu, X, Moon, Sun, Languages, CreditCard, MessageCircle, LogOut, Shield, BookOpen, CalendarPlus, CalendarCheck, CalendarDays, Clapperboard, Home } from "lucide-react";
+import { Menu, X, Moon, Sun, Languages, CreditCard, MessageCircle, LogOut, Shield, BookOpen, CalendarPlus, CalendarCheck, CalendarDays, Clapperboard, Home, MessagesSquare } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
@@ -129,6 +129,16 @@ export default function HamburgerMenu() {
                 <div className="flex-1 text-right">
                   <p className="font-medium text-sm flex items-center gap-2">المحاضرات <span className="text-[10px] bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded-full font-bold">جديد ✨</span></p>
                   <p className="text-xs text-gray-500">محاضرات مسجلة تشتريها وتفضل معاك — معاينات مجانية 🎬</p>
+                </div>
+              </Link>
+
+              <Link href="/messages" onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                <div className="p-2 bg-fuchsia-50 dark:bg-fuchsia-900/30 rounded-lg text-fuchsia-600 dark:text-fuchsia-400">
+                  <MessagesSquare size={18} />
+                </div>
+                <div className="flex-1 text-right">
+                  <p className="font-medium text-sm flex items-center gap-2">الرسائل <span className="text-[10px] bg-fuchsia-100 dark:bg-fuchsia-900/40 text-fuchsia-600 dark:text-fuchsia-300 px-1.5 py-0.5 rounded-full font-bold">جديد ✨</span></p>
+                  <p className="text-xs text-gray-500">كلم صحابك المشتركين + دعم مِعافر 💬</p>
                 </div>
               </Link>
 

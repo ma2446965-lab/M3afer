@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
-import { GraduationCap, Search, Check, Loader2, Copy, Crown } from "lucide-react";
+import { GraduationCap, Search, Check, Loader2, Copy, Crown, MessagesSquare } from "lucide-react";
+import Link from "next/link";
 
 const fmtDate = (v: any): string => {
   if (!v) return "—";
@@ -166,6 +167,7 @@ export default function StudentsManager() {
                   <th className="p-3 font-medium">الحالة</th>
                   <th className="p-3 font-medium">نهاية الاشتراك</th>
                   <th className="p-3 font-medium">تاريخ التسجيل</th>
+                  <th className="p-3 font-medium">💬</th>
                 </tr>
               </thead>
               <tbody className="divide-y dark:divide-gray-700">
@@ -213,6 +215,17 @@ export default function StudentsManager() {
                       </td>
                       <td className="p-3 text-gray-500 dark:text-gray-400 text-xs whitespace-nowrap">
                         {fmtDate(u.createdAt)}
+                      </td>
+                      <td className="p-3 whitespace-nowrap">
+                        {u.role !== "admin" && (
+                          <Link
+                            href={`/messages?support=${u.docId}`}
+                            title="فتح محادثة دعم مع الطالب ده"
+                            className="inline-flex items-center gap-1 text-[11px] font-bold bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-300 hover:bg-sky-100 px-2.5 py-1.5 rounded-full transition"
+                          >
+                            <MessagesSquare size={11} /> مراسلة
+                          </Link>
+                        )}
                       </td>
                     </tr>
                   );
