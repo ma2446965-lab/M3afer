@@ -24,7 +24,8 @@ import {
   Gift,
   Package,
   PlayCircle,
-  AlertTriangle
+  AlertTriangle,
+  LogIn
 } from "lucide-react";
 
 function PaymentBanner() {
@@ -83,12 +84,9 @@ function LecturesPageInner() {
   const [search, setSearch] = useState("");
   const [payingBundle, setPayingBundle] = useState<string | null>(null);
 
+  // Public catalog: anonymous visitors browse everything (rules:
+  // lectures read = public). Only PURCHASES need a signed-in user.
   useEffect(() => {
-    if (!loading && !user) router.replace("/auth/login");
-  }, [loading, user, router]);
-
-  useEffect(() => {
-    if (!user) return;
     let cancelled = false;
     (async () => {
       try {
@@ -106,6 +104,7 @@ function LecturesPageInner() {
         if (!cancelled) setFetching(false);
       }
     })();
+    if (!user) return () => { cancelled = true; };
     const q = query(collection(db, PURCHASES_COL), where("studentId", "==", user.uid));
     const unsub = onSnapshot(
       q,
@@ -142,10 +141,14 @@ function LecturesPageInner() {
   }, [lectures, selectedSubjectId, ownedIds]);
 
   const buyBundle = async (subjectId: string) => {
+    if (!user) {
+      router.push(`/auth/login?next=${encodeURIComponent("/lectures")}`);
+      return;
+    }
     if (payingBundle) return;
     setPayingBundle(subjectId);
     try {
-      const token = await user!.getIdToken();
+      const token = await user.getIdToken();
       const res = await fetch("/api/fatorak/checkout", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "content-type": "application/json" },
@@ -160,7 +163,7 @@ function LecturesPageInner() {
     }
   };
 
-  if (loading || !user) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] dark:bg-gray-900">
         <Loader2 className="animate-spin text-indigo-500" size={32} />
@@ -185,6 +188,25 @@ function LecturesPageInner() {
         <Suspense fallback={null}>
           <PaymentBanner />
         </Suspense>
+
+        {/* Guest banner — browsing is free, buying needs an account */}
+        {!user && (
+          <div className="bg-gradient-to-r from-sky-50 to-indigo-50 dark:from-sky-900/20 dark:to-indigo-900/20 border border-sky-200 dark:border-sky-800 rounded-2xl p-4 flex items-center gap-3 flex-wrap">
+            <div className="p-2.5 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-xl text-white shrink-0">
+              <LogIn size={20} />
+            </div>
+            <div className="flex-1 min-w-[200px]">
+              <p className="font-bold text-sm">بتتفرج كضيف 👋 — اتفرج براحتك على العناوين والأسعار</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">سجّل دخولك بس عشان تشتري محاضرة أو تشوف المعاينات المجانية</p>
+            </div>
+            <Link
+              href={`/auth/login?next=${encodeURIComponent("/lectures")}`}
+              className="bg-gradient-to-r from-sky-500 to-indigo-600 hover:opacity-95 text-white font-bold px-5 py-2.5 rounded-xl text-sm flex items-center gap-2"
+            >
+              <LogIn size={16} /> دخول / حساب جديد
+            </Link>
+          </div>
+        )}
 
         {/* filters */}
         <div className="flex gap-2 overflow-x-auto pb-1">

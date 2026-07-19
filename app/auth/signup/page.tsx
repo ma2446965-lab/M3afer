@@ -1,18 +1,24 @@
 "use client";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { v4 as uuidv4 } from "uuid";
+import { sanitizeNextPath } from "@/lib/nav";
 
-export default function SignupPage() {
+function SignupPageInner() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // After signup a user with no grade goes through onboarding first (the home
+  // page shows it full-screen), then lands on `next` naturally — still, push
+  // them back toward what they wanted (e.g. the lecture they tried to buy).
+  const next = sanitizeNextPath(searchParams.get("next"));
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +45,8 @@ export default function SignupPage() {
         preferredPersona: "ing.Mohamed",
         createdAt: new Date().toISOString()
       });
+      // New accounts are already signed in; home shows the mandatory
+      // onboarding overlay first, then the catalog is one tap away.
       router.push("/");
     } catch (err: any) {
       setError(err.message.includes("email-already") ? "الإيميل ده متسجل قبل كده" : err.message);
@@ -74,9 +82,17 @@ export default function SignupPage() {
         </form>
 
         <p className="text-center text-sm text-gray-500 mt-6">
-          عندك حساب؟ <Link href="/auth/login" className="text-indigo-600 font-bold hover:underline">سجل دخول</Link>
+          عندك حساب؟ <Link href={`/auth/login${next !== "/" ? `?next=${encodeURIComponent(next)}` : ""}`} className="text-indigo-600 font-bold hover:underline">سجل دخول</Link>
         </p>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignupPageInner />
+    </Suspense>
   );
 }
