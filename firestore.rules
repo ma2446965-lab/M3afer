@@ -236,6 +236,58 @@ service cloud.firestore {
     }
 
     // ------------------------------------------------------------------
+    // الكورسات 📦 — courses group lectures into a sellable unit. Catalog
+    // docs are PUBLIC (same as lectures); writes are admin-only with a
+    // light shape guard so a typo can't silently corrupt the storefront.
+    // ------------------------------------------------------------------
+    match /courses/{courseId} {
+      allow get, list: if true;
+      allow create, update: if isAdmin() &&
+        request.resource.data.keys().hasOnly(
+          ["title", "subjectId", "subjectName", "teacherName", "description",
+           "thumbnailPath", "discountPct", "published", "order", "lectureCount",
+           "createdAt", "updatedAt"]
+        ) &&
+        request.resource.data.title is string &&
+        request.resource.data.title.size() >= 3 &&
+        request.resource.data.title.size() <= 180 &&      // bytes ≈ 90 Arabic chars
+        request.resource.data.discountPct is number &&
+        request.resource.data.discountPct >= 0 &&
+        request.resource.data.discountPct <= 0.5;
+      allow delete: if isAdmin();
+
+      // (Course content still lives in /lectures — linked by courseId.)
+    }
+
+    // coursePurchases — AUDIT receipt written ONLY by the Fatorak webhook
+    // (Admin SDK) after a whole-course payment. The actual ACCESS comes
+    // from the per-lecture grants it fans out into lecturePurchases — this
+    // doc exists for stats, support and future grant top-ups.
+    match /coursePurchases/{purchaseId} {
+      allow read: if isAdmin() ||
+        (isSignedIn() && resource.data.studentId == request.auth.uid);
+      allow create, update, delete: if false;
+    }
+
+    // lectureProgress — student-owned watch state. CRITICAL: this grants
+    // NOTHING — media access still comes only from lecturePurchases/free,
+    // so a student may freely toggle their own progress docs. Keys are
+    // whitelisted (incl. lastPositionSec reserved for resume-in-v2, so the
+    // rule won't need republishing then).
+    match /lectureProgress/{progressId} {
+      allow read: if isAdmin() ||
+        (isSignedIn() && resource.data.studentId == request.auth.uid);
+      allow create, update: if isSignedIn() &&
+        request.resource.data.keys().hasOnly(
+          ["studentId", "lectureId", "courseId", "watched", "watchedAt",
+           "lastPositionSec", "updatedAt"]
+        ) &&
+        request.resource.data.studentId == request.auth.uid &&
+        request.resource.data.watched is bool;
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------------
     // رسائل 💬 — conversations. Exactly 2 members per room:
     //   • "dm"      → subscriber ↔ subscriber (client get()-verifies BOTH
     //                  users docs' `subscribed` flag here in rules)
