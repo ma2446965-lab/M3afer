@@ -242,9 +242,12 @@ export async function POST(req: NextRequest) {
     // Echoed back as pay_load in the paid webhook (WHAT was paid + for WHOM).
     payLoad,
     redirectionUrls: {
-      successUrl: `${redirectBase}?payment=success`,
-      failUrl: `${redirectBase}?payment=failed`,
-      pendingUrl: `${redirectBase}?payment=pending`,
+      // Customer lands on the dedicated result pages; the "ارجع" button there
+      // carries them back to the product page WITH its ?payment= state, so
+      // that page's banner + auto-confirm polling still do their job.
+      successUrl: `${origin}/payment-success?next=${encodeURIComponent(redirectBase.slice(origin.length))}`,
+      failUrl: `${origin}/payment-failed?next=${encodeURIComponent(redirectBase.slice(origin.length))}`,
+      pendingUrl: `${origin}/payment-pending?next=${encodeURIComponent(redirectBase.slice(origin.length))}`,
       // MUST stay exactly /api/fatorak-webhook — a typo here silently breaks
       // ALL payment confirmations after the customer pays.
       webhookUrl: `${origin}/api/fatorak-webhook`
