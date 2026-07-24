@@ -130,17 +130,17 @@ export default function LibraryPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] dark:bg-gray-900 pb-24">
+    <div className="min-h-screen bg-slate-50 dark:bg-navy-900 pb-24">
 
       <div className="max-w-5xl mx-auto p-4 pt-6 md:pt-10">
         <h1 className="text-2xl font-bold">المكتبة 📚</h1>
         <p className="text-sm text-gray-500">كل ملازمك وملخصاتك في مكان واحد</p>
 
         {/* Upload Card */}
-        <div className="mt-6 bg-white dark:bg-gray-800 rounded-[24px] p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="mt-6 bg-white dark:bg-navy-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-navy-700">
           <h3 className="font-bold flex items-center gap-2">
-            <div className="w-8 h-8 bg-violet-100 dark:bg-violet-900/30 rounded-lg flex items-center justify-center">
-              <Upload size={16} className="text-violet-600" />
+            <div className="w-8 h-8 bg-brand-100 dark:bg-brand-900/30 rounded-lg flex items-center justify-center">
+              <Upload size={16} className="text-brand-600" />
             </div>
             ارفع ملزمة جديدة
           </h3>
@@ -151,7 +151,7 @@ export default function LibraryPage() {
               <select
                 value={selectedSubject}
                 onChange={e => setSelectedSubject(e.target.value)}
-                className="mt-1 w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-sm"
+                className="mt-1 w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-navy-700 bg-white dark:bg-navy-700 text-sm"
               >
                 <option value="">اختر المادة...</option>
                 {subjects.map(subj => (
@@ -162,7 +162,7 @@ export default function LibraryPage() {
 
             <div>
               <label className="text-xs font-medium">الملف (PDF)</label>
-              <div className="mt-1 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl p-6 text-center hover:border-violet-300 transition">
+              <div className="mt-1 border-2 border-dashed border-gray-200 dark:border-navy-700 rounded-xl p-6 text-center hover:border-brand-300 transition">
                 <input type="file" accept=".pdf" onChange={e => setFile(e.target.files?.[0] || null)} className="hidden" id="pdf-upload" />
                 <label htmlFor="pdf-upload" className="cursor-pointer">
                   <FileText className="mx-auto text-gray-400 mb-2" size={32} />
@@ -175,7 +175,7 @@ export default function LibraryPage() {
             <button
               onClick={handleUpload}
               disabled={!file || !selectedSubject || isProcessing}
-              className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-3 rounded-xl font-bold disabled:opacity-50 hover:scale-[1.01] transition"
+              className="w-full bg-gradient-to-r from-brand-700 to-brand-500 text-white py-3 rounded-xl font-bold disabled:opacity-50 hover:scale-[1.01] transition"
             >
               {isProcessing ? "بنقرأ الملف ونلخصه بـ AI... 🧠" : "رفع ومعالجة بالـ AI ✨"}
             </button>
@@ -199,14 +199,14 @@ export default function LibraryPage() {
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="ابحث في المكتبة..."
-            className="w-full pr-10 pl-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
+            className="w-full pr-10 pl-4 py-3 rounded-xl border border-gray-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-sm"
           />
         </div>
 
         {/* PDF List */}
         <div className="mt-4 grid md:grid-cols-2 gap-3">
           {filteredPdfs.map(pdf => (
-            <div key={pdf.id} onClick={() => setSelectedPdf(pdf)} className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 hover:shadow-md transition cursor-pointer">
+            <div key={pdf.id} onClick={() => setSelectedPdf(pdf)} className="bg-white dark:bg-navy-800 rounded-2xl p-4 border border-gray-100 dark:border-navy-700 hover:shadow-md transition cursor-pointer">
               <div className="flex justify-between items-start">
                 <div className="flex gap-3">
                   <div className="w-10 h-10 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center">
@@ -217,15 +217,15 @@ export default function LibraryPage() {
                     <p className="text-xs text-gray-500">{pdf.subjectAr} • {new Date(pdf.uploadedAt).toLocaleDateString("ar-EG")}</p>
                   </div>
                 </div>
-                <span className={`text-[10px] px-2 py-1 rounded-full ${pdf.status === "done" ? "bg-green-50 text-green-600" : "bg-amber-50 text-amber-600"}`}>
+                <span className={`text-[10px] px-2 py-1 rounded-full ${pdf.status === "done" ? "bg-green-50 text-green-600" : "bg-accent-50 text-accent-600"}`}>
                   {pdf.status === "done" ? "جاهز" : "بيتعالج..."}
                 </span>
               </div>
               {pdf.status === "done" && (
                 <div className="mt-3 flex gap-1.5">
-                  <span className="text-[10px] bg-sky-50 dark:bg-sky-900/20 text-sky-600 px-2 py-1 rounded-full flex items-center gap-1"><Sparkles size={10} /> ملخص</span>
-                  <span className="text-[10px] bg-violet-50 dark:bg-violet-900/20 text-violet-600 px-2 py-1 rounded-full flex items-center gap-1"><Brain size={10} /> كويز</span>
-                  <span className="text-[10px] bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 px-2 py-1 rounded-full flex items-center gap-1"><Headphones size={10} /> صوتي</span>
+                  <span className="text-[10px] bg-brand-50 dark:bg-brand-900/20 text-brand-600 px-2 py-1 rounded-full flex items-center gap-1"><Sparkles size={10} /> ملخص</span>
+                  <span className="text-[10px] bg-brand-50 dark:bg-brand-900/20 text-brand-600 px-2 py-1 rounded-full flex items-center gap-1"><Brain size={10} /> كويز</span>
+                  <span className="text-[10px] bg-brand-50 dark:bg-brand-900/20 text-brand-600 px-2 py-1 rounded-full flex items-center gap-1"><Headphones size={10} /> صوتي</span>
                 </div>
               )}
             </div>
@@ -243,23 +243,23 @@ export default function LibraryPage() {
       {/* Detail Modal */}
       {selectedPdf && (
         <div className="fixed inset-0 z-[70] bg-black/40 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-6">
-          <div className="bg-white dark:bg-gray-900 w-full md:max-w-3xl h-[90vh] md:h-[80vh] rounded-t-[32px] md:rounded-[24px] flex flex-col overflow-hidden">
-            <div className="p-5 border-b dark:border-gray-800 flex justify-between items-center">
+          <div className="bg-white dark:bg-navy-900 w-full md:max-w-3xl h-[90vh] md:h-[80vh] rounded-t-[32px] md:rounded-2xl flex flex-col overflow-hidden">
+            <div className="p-5 border-b dark:border-navy-800 flex justify-between items-center">
               <div>
                 <h3 className="font-bold">{selectedPdf.fileName}</h3>
                 <p className="text-xs text-gray-500">{selectedPdf.subjectAr} • مراجعة نهائية</p>
               </div>
-              <button onClick={() => setSelectedPdf(null)} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full">✕</button>
+              <button onClick={() => setSelectedPdf(null)} className="p-2 bg-gray-100 dark:bg-navy-800 rounded-full">✕</button>
             </div>
 
-            <div className="flex gap-1 p-2 bg-gray-50 dark:bg-gray-800/50">
+            <div className="flex gap-1 p-2 bg-gray-50 dark:bg-navy-800/50">
               {[
                 { id: "summary", label: "الملخص", icon: Sparkles },
                 { id: "quiz", label: "كويز", icon: Brain },
                 { id: "flashcards", label: "فلاش", icon: FileText },
                 { id: "audio", label: "بودكاست", icon: Headphones },
               ].map(tab => (
-                <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`flex-1 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-1.5 transition ${activeTab === tab.id ? "bg-white dark:bg-gray-700 shadow-sm text-indigo-600 dark:text-white" : "text-gray-500"}`}>
+                <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`flex-1 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-1.5 transition ${activeTab === tab.id ? "bg-white dark:bg-navy-700 shadow-sm text-brand-600 dark:text-white" : "text-gray-500"}`}>
                   <tab.icon size={14} /> {tab.label}
                 </button>
               ))}
@@ -268,7 +268,7 @@ export default function LibraryPage() {
             <div className="flex-1 overflow-y-auto p-5">
               {activeTab === "summary" && (
                 <div className="prose dark:prose-invert max-w-none">
-                  <div className="whitespace-pre-wrap text-sm leading-relaxed bg-amber-50/50 dark:bg-amber-900/10 p-4 rounded-xl border border-amber-100 dark:border-amber-900/20">
+                  <div className="whitespace-pre-wrap text-sm leading-relaxed bg-accent-50/50 dark:bg-accent-900/10 p-4 rounded-xl border border-accent-100 dark:border-accent-900/20">
                     {selectedPdf.summary || (selectedPdf.status === "done" ? "الملخص ده مش متوفر للملف ده — جرب رفع نسخة أوضح أو كمان شوية." : "جاري توليد الملخص...")}
                   </div>
                 </div>
@@ -276,12 +276,12 @@ export default function LibraryPage() {
               {activeTab === "quiz" && (
                 <div className="space-y-3">
                   {selectedPdf.quiz?.questions?.length ? selectedPdf.quiz.questions.map((q: any, i: number) => (
-                    <div key={i} className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border dark:border-gray-700">
+                    <div key={i} className="bg-gray-50 dark:bg-navy-800 p-4 rounded-xl border dark:border-navy-700">
                       <p className="font-medium text-sm">س{i+1}: {q.question}</p>
-                      <p className="text-[11px] text-indigo-600 mt-1">{q.type} • {q.difficulty}</p>
+                      <p className="text-[11px] text-brand-600 mt-1">{q.type} • {q.difficulty}</p>
                       <div className="mt-2 space-y-1.5">
                         {q.options?.map((opt: string, j: number) => (
-                          <div key={j} className={`p-2 rounded-lg text-sm border ${j === q.correctAnswer ? "bg-green-50 border-green-200 text-green-700" : "bg-white dark:bg-gray-700 border-gray-100 dark:border-gray-600"}`}>{opt}</div>
+                          <div key={j} className={`p-2 rounded-lg text-sm border ${j === q.correctAnswer ? "bg-green-50 border-green-200 text-green-700" : "bg-white dark:bg-navy-700 border-gray-100 dark:border-navy-600"}`}>{opt}</div>
                         ))}
                       </div>
                       <p className="text-xs text-gray-500 mt-2">💡 {q.explanation}</p>
@@ -292,9 +292,9 @@ export default function LibraryPage() {
               {activeTab === "flashcards" && (
                 <div className="grid gap-3">
                   {selectedPdf.flashcards?.flashcards?.map((fc: any, i: number) => (
-                    <div key={i} className="bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 p-4 rounded-xl border border-violet-100 dark:border-violet-800/50">
+                    <div key={i} className="bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 p-4 rounded-xl border border-violet-100 dark:border-brand-800/50">
                       <p className="font-bold text-sm">❓ {fc.front}</p>
-                      <p className="text-sm mt-2 text-gray-700 dark:text-gray-300">✅ {fc.back}</p>
+                      <p className="text-sm mt-2 text-navy-700 dark:text-gray-300">✅ {fc.back}</p>
                       {fc.hint && <p className="text-xs text-gray-500 mt-1">💡 تلميح: {fc.hint}</p>}
                     </div>
                   )) || <p className="text-sm text-gray-500">{selectedPdf.flashcards?.raw || "لا يوجد فلاش كاردز"}</p>}
@@ -302,8 +302,8 @@ export default function LibraryPage() {
               )}
               {activeTab === "audio" && (
                 <div>
-                  <div className="bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-sky-900/10 dark:to-indigo-900/10 p-4 rounded-xl border border-sky-100 dark:border-sky-900/20">
-                    <p className="text-xs font-bold text-sky-700 dark:text-sky-300 mb-2">🎙️ سكريبت بودكاست (NotebookLM Style) — اقرأه بنفسك أو اسمعه لحد يشرحهولك</p>
+                  <div className="bg-gradient-to-br from-brand-50 to-slate-50 dark:from-sky-900/10 dark:to-indigo-900/10 p-4 rounded-xl border border-brand-100 dark:border-brand-900/20">
+                    <p className="text-xs font-bold text-brand-700 dark:text-brand-300 mb-2">🎙️ سكريبت بودكاست (NotebookLM Style) — اقرأه بنفسك أو اسمعه لحد يشرحهولك</p>
                     <p className="text-sm whitespace-pre-wrap leading-relaxed">{selectedPdf.audioScript || (selectedPdf.status === "done" ? "السكريبت ده مش متوفر للملف ده حاليًا." : "جاري توليد السكريبت...")}</p>
                   </div>
                   <p className="mt-3 text-[11px] text-center text-gray-400">تحويل السكريبت لصوت فعلي جاي في تحديث قريب 🔊</p>

@@ -43,20 +43,20 @@ export default function OnboardingFlow({ onComplete }: { onComplete: () => void 
   };
 
   return (
-    <div className="fixed inset-0 z-[200] overflow-y-auto bg-gradient-to-br from-sky-50 via-indigo-50 to-violet-50 dark:from-gray-900 dark:via-gray-900 dark:to-indigo-950">
+    <div className="fixed inset-0 z-[200] overflow-y-auto bg-gradient-to-br from-brand-50 via-slate-50 to-navy-50 dark:from-navy-900 dark:via-navy-900 dark:to-navy-950">
       <div className="min-h-full flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-[32px] shadow-2xl overflow-hidden">
+      <div className="w-full max-w-md bg-white dark:bg-navy-800 rounded-2xl shadow-2xl overflow-hidden">
         {/* Progress */}
         <div className="p-6 pb-2">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-xl font-bold">Meafer.ai</h1>
-            <span className="text-xs bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 px-3 py-1 rounded-full">
+            <span className="text-xs bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-300 px-3 py-1 rounded-full">
               خطوة {step} من {selectedGrade === "الصف الأول الثانوي" ? 2 : 3}
             </span>
           </div>
           <div className="flex gap-2">
             {[1,2,3].map(i => (
-              <div key={i} className={`h-2 flex-1 rounded-full transition-all ${i <= step ? "bg-indigo-600" : "bg-gray-200 dark:bg-gray-700"}`} />
+              <div key={i} className={`h-2 flex-1 rounded-full transition-all ${i <= step ? "bg-brand-600" : "bg-gray-200 dark:bg-navy-700"}`} />
             ))}
           </div>
         </div>
@@ -65,11 +65,11 @@ export default function OnboardingFlow({ onComplete }: { onComplete: () => void 
           {step === 1 && (
             <div className="space-y-4 animate-in fade-in">
               <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <div className="w-16 h-16 bg-gradient-to-br from-brand-700 to-brand-500 rounded-2xl flex items-center justify-center mx-auto mb-3">
                   <GraduationCap className="text-white" size={32} />
                 </div>
                 <h2 className="text-2xl font-bold">أنت في سنة كام؟</h2>
-                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">ده هيحدد منهجك وطريقة الشرح</p>
+                <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">ده هيحدد منهجك وطريقة الشرح</p>
               </div>
 
               {GRADES.map((grade) => (
@@ -77,7 +77,7 @@ export default function OnboardingFlow({ onComplete }: { onComplete: () => void 
                   key={grade}
                   onClick={() => handleGradeSelect(grade)}
                   className={`w-full p-4 rounded-2xl border-2 text-right flex items-center justify-between transition-all hover:scale-[1.02] ${
-                    selectedGrade === grade ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20" : "border-gray-100 dark:border-gray-700 hover:border-indigo-200"
+                    selectedGrade === grade ? "border-brand-600 bg-brand-50 dark:bg-brand-900/20" : "border-gray-100 dark:border-navy-700 hover:border-brand-200"
                   }`}
                 >
                   <div>
@@ -88,7 +88,7 @@ export default function OnboardingFlow({ onComplete }: { onComplete: () => void 
                       {grade === "الصف الثالث الثانوي" && "سنة الحسم • الثانوية العامة 🎯"}
                     </p>
                   </div>
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${selectedGrade === grade ? "bg-indigo-600 border-indigo-600 text-white" : "border-gray-300"}`}>
+                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${selectedGrade === grade ? "bg-brand-600 border-brand-600 text-white" : "border-gray-300"}`}>
                     {selectedGrade === grade && <Check size={14} />}
                   </div>
                 </button>
@@ -99,7 +99,7 @@ export default function OnboardingFlow({ onComplete }: { onComplete: () => void 
           {step === 2 && (
             <div className="space-y-4 animate-in fade-in">
               <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <div className="w-16 h-16 bg-gradient-to-br from-brand-600 to-navy-700 rounded-2xl flex items-center justify-center mx-auto mb-3">
                   <FlaskConical className="text-white" size={32} />
                 </div>
                 <h2 className="text-2xl font-bold">شعبتك إيه؟</h2>
@@ -111,7 +111,7 @@ export default function OnboardingFlow({ onComplete }: { onComplete: () => void 
                   key={track}
                   onClick={() => { setSelectedTrack(track); setStep(3); }}
                   className={`w-full p-4 rounded-2xl border-2 text-right flex items-center justify-between transition-all hover:scale-[1.02] ${
-                    selectedTrack === track ? "border-violet-600 bg-violet-50 dark:bg-violet-900/20" : "border-gray-100 dark:border-gray-700"
+                    selectedTrack === track ? "border-brand-600 bg-brand-50 dark:bg-brand-900/20" : "border-gray-100 dark:border-navy-700"
                   }`}
                 >
                   <div>
@@ -141,12 +141,12 @@ export default function OnboardingFlow({ onComplete }: { onComplete: () => void 
               </div>
               <div>
                 <h2 className="text-2xl font-bold">ممتاز! 🎉</h2>
-                <p className="text-gray-600 dark:text-gray-400 mt-2">
+                <p className="text-gray-600 dark:text-slate-400 mt-2">
                   سجلناك في<br />
-                  <span className="font-bold text-indigo-600 text-lg">{selectedGrade}</span><br />
+                  <span className="font-bold text-brand-600 text-lg">{selectedGrade}</span><br />
                   {selectedTrack && <span className="font-bold">{selectedTrack}</span>}
                 </p>
-                <p className="text-xs text-gray-500 mt-3 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-xl">
+                <p className="text-xs text-gray-500 mt-3 bg-gray-50 dark:bg-navy-700/50 p-3 rounded-xl">
                   كل الملخصات والكويزات هتكون مخصصة لمنهجك بأسلوب وزارة التربية والتعليم المصرية.<br />
                   تقدر تغير الشعبة/السنة في أي وقت من الإعدادات.
                 </p>
@@ -155,7 +155,7 @@ export default function OnboardingFlow({ onComplete }: { onComplete: () => void 
               <button
                 onClick={handleComplete}
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-sky-500 to-indigo-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-indigo-500/25 hover:scale-[1.02] transition-all disabled:opacity-50"
+                className="w-full bg-gradient-to-r from-brand-700 to-brand-500 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-brand-700/25 hover:scale-[1.02] transition-all disabled:opacity-50"
               >
                 {loading ? "جاري الحفظ..." : "يلا نبدأ المذاكرة 🚀"}
               </button>

@@ -36,7 +36,7 @@ function PaymentBanner() {
   const state = params.get("payment");
   if (state === "success")
     return (
-      <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 p-3.5 rounded-2xl text-sm font-bold">
+      <div className="bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 text-brand-700 dark:text-brand-300 p-3.5 rounded-2xl text-sm font-bold">
         ✅ الدفع تم بنجاح! بنفتح لك كل محاضرات الكورس — بنأكد تلقائيًا خلال ثواني...
       </div>
     );
@@ -48,7 +48,7 @@ function PaymentBanner() {
     );
   if (state === "pending")
     return (
-      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 p-3.5 rounded-2xl text-sm font-bold">
+      <div className="bg-accent-50 dark:bg-accent-900/20 border border-accent-200 dark:border-accent-800 text-accent-700 dark:text-accent-300 p-3.5 rounded-2xl text-sm font-bold">
         ⏳ الدفع قيد المراجعة — هيتفعّل لوحده أول ما يتأكد.
       </div>
     );
@@ -64,7 +64,7 @@ function CourseThumb({ path }: { path?: string | null }) {
   }, [path]);
   if (!url) {
     return (
-      <div className="w-full h-40 rounded-[24px] bg-gradient-to-br from-violet-500 via-purple-600 to-indigo-600 flex items-center justify-center text-white/90">
+      <div className="w-full h-40 rounded-[24px] bg-gradient-to-br from-brand-600 via-brand-500 to-navy-700 flex items-center justify-center text-white/90">
         <PlayCircle size={52} className="opacity-80" />
       </div>
     );
@@ -169,16 +169,16 @@ function CourseDetailInner() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] dark:bg-gray-900">
-        <Loader2 className="animate-spin text-violet-500" size={32} />
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-navy-900">
+        <Loader2 className="animate-spin text-brand-500" size={32} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] dark:bg-gray-900 pb-24 md:pb-8">
+    <div className="min-h-screen bg-slate-50 dark:bg-navy-900 pb-24 md:pb-8">
       <div className="max-w-3xl mx-auto p-4 pt-6 md:pt-10 space-y-4">
-        <Link href="/courses" className="inline-flex items-center gap-1 text-xs text-violet-600 font-bold hover:underline">
+        <Link href="/courses" className="inline-flex items-center gap-1 text-xs text-brand-600 font-bold hover:underline">
           <ChevronLeft size={14} className="-scale-x-100" /> كل الكورسات
         </Link>
 
@@ -186,21 +186,21 @@ function CourseDetailInner() {
           <PaymentBanner />
         </Suspense>
         {confirming && (
-          <p className="text-xs text-violet-600 bg-violet-50 dark:bg-violet-900/20 p-3 rounded-xl flex items-center gap-1.5">
+          <p className="text-xs text-brand-600 bg-brand-50 dark:bg-brand-900/20 p-3 rounded-xl flex items-center gap-1.5">
             <Loader2 size={14} className="animate-spin" /> جاري تأكيد الدفع وفتح كل المحاضرات تلقائيًا...
           </p>
         )}
 
         {phase === "loading" && (
           <div className="space-y-3 animate-pulse">
-            <div className="w-full h-40 bg-gray-200 dark:bg-gray-800 rounded-[24px]" />
-            <div className="h-5 bg-gray-200 dark:bg-gray-800 rounded w-2/3" />
-            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/3" />
+            <div className="w-full h-40 bg-slate-200 dark:bg-navy-800 rounded-[24px]" />
+            <div className="h-5 bg-slate-200 dark:bg-navy-800 rounded w-2/3" />
+            <div className="h-4 bg-slate-200 dark:bg-navy-800 rounded w-1/3" />
           </div>
         )}
 
         {phase === "missing" && (
-          <div className="text-center p-12 bg-white dark:bg-gray-800 rounded-2xl border dark:border-gray-700 text-gray-400">
+          <div className="text-center p-12 bg-white dark:bg-navy-800 rounded-2xl border dark:border-navy-700 text-slate-400">
             <AlertTriangle size={36} className="mx-auto mb-3 opacity-40" />
             <p className="font-bold">{err || "الكورس ده مش موجود أو مش منشور"}</p>
           </div>
@@ -212,14 +212,14 @@ function CourseDetailInner() {
 
             <div>
               <h1 className="font-bold text-xl leading-snug">{course.title}</h1>
-              <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-3 flex-wrap">
-                {course.subjectName && <span className="bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-300 px-2 py-0.5 rounded-full">{course.subjectName}</span>}
+              <p className="text-xs text-slate-400 mt-1.5 flex items-center gap-3 flex-wrap">
+                {course.subjectName && <span className="bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-300 px-2 py-0.5 rounded-full">{course.subjectName}</span>}
                 {course.teacherName && <span>👨‍🏫 {course.teacherName}</span>}
                 <span className="flex items-center gap-1"><Clock3 size={12} /> {own.totalLectures} محاضرة{totalMin > 0 ? ` • ${totalMin} دقيقة` : ""}</span>
                 {own.ownedCount > 0 && <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full flex items-center gap-1"><BadgeCheck size={11} /> عندك {own.ownedCount} من {own.totalLectures}</span>}
               </p>
               {!!course.description && (
-                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mt-3 bg-white dark:bg-gray-800 rounded-2xl p-4 border dark:border-gray-700">
+                <p className="text-sm text-slate-600 dark:text-gray-300 leading-relaxed mt-3 bg-white dark:bg-navy-800 rounded-2xl p-4 border dark:border-navy-700">
                   {course.description}
                 </p>
               )}
@@ -227,37 +227,37 @@ function CourseDetailInner() {
 
             {/* ownership progress */}
             {own.totalLectures > 0 && own.ownedCount > 0 && !own.allOwned && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border dark:border-gray-700 space-y-2">
-                <p className="text-xs font-bold text-gray-500">تقدّم ملكيتك في الكورس: {own.ownedCount}/{own.totalLectures}</p>
-                <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-violet-500 to-purple-600 rounded-full transition-all" style={{ width: `${Math.round((own.ownedCount / own.totalLectures) * 100)}%` }} />
+              <div className="bg-white dark:bg-navy-800 rounded-2xl p-4 border dark:border-navy-700 space-y-2">
+                <p className="text-xs font-bold text-slate-500">تقدّم ملكيتك في الكورس: {own.ownedCount}/{own.totalLectures}</p>
+                <div className="h-2 bg-slate-100 dark:bg-navy-700 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-brand-500 to-navy-700 rounded-full transition-all" style={{ width: `${Math.round((own.ownedCount / own.totalLectures) * 100)}%` }} />
                 </div>
               </div>
             )}
 
             {/* buy-course CTA */}
             {!own.allOwned && quote && (
-              <div className="bg-white dark:bg-gray-800 rounded-[24px] p-6 border-2 border-violet-500 shadow-[0_0_0_4px_rgba(139,92,246,0.12)] space-y-4">
+              <div className="bg-white dark:bg-navy-800 rounded-[24px] p-6 border-2 border-brand-500 shadow-[0_0_0_4px_rgba(139,92,246,0.12)] space-y-4">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <div>
                     <p className="font-bold">خد الكورس كامل بخصم {Math.round(pct * 100)}% 📦</p>
-                    <p className="text-xs text-gray-400 mt-0.5">
+                    <p className="text-xs text-slate-400 mt-0.5">
                       {quote.count} محاضرة {own.ownedCount > 0 ? "متبقية عليك" : "مدفوعة"} — بدل ما تشتري كل واحدة لوحدها بـ {quote.grossEgp} ج.م
                     </p>
                   </div>
                   <div className="text-left">
                     <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-black bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">{quote.totalEgp}</span>
-                      <span className="text-gray-500 font-bold text-sm">ج.م</span>
+                      <span className="text-3xl font-black bg-gradient-to-r from-brand-600 to-navy-700 bg-clip-text text-transparent">{quote.totalEgp}</span>
+                      <span className="text-slate-500 font-bold text-sm">ج.م</span>
                     </div>
-                    {quote.savedEgp > 0 && <p className="text-[11px] text-amber-600 font-bold">بتوفّر {quote.savedEgp} ج.م 🔥</p>}
+                    {quote.savedEgp > 0 && <p className="text-[11px] text-accent-600 font-bold">بتوفّر {quote.savedEgp} ج.م 🔥</p>}
                   </div>
                 </div>
                 {err && <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-xl">{err}</p>}
                 {!user ? (
                   <Link
                     href={`/auth/login?next=${encodeURIComponent(`/courses/${courseId}`)}`}
-                    className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:opacity-95 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2"
+                    className="w-full bg-gradient-to-r from-brand-600 to-navy-700 hover:opacity-95 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2"
                   >
                     <LogIn size={18} /> سجّل دخولك عشان تشتري الكورس
                   </Link>
@@ -265,13 +265,13 @@ function CourseDetailInner() {
                   <button
                     onClick={buyCourse}
                     disabled={paying}
-                    className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:opacity-95 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2"
+                    className="w-full bg-gradient-to-r from-brand-600 to-navy-700 hover:opacity-95 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2"
                   >
                     {paying ? <Loader2 size={18} className="animate-spin" /> : <CreditCard size={18} />}
                     {paying ? "بنجهز لينك الدفع..." : `افتح الكورس كامل — ${quote.totalEgp} ج.م`}
                   </button>
                 )}
-                <p className="text-[11px] text-gray-400 text-center">دفع آمن عبر فواترك — فيزا/فوري/محافظ 💳 • الشراء بينفعّل كل المحاضرات فورًا</p>
+                <p className="text-[11px] text-slate-400 text-center">دفع آمن عبر فواترك — فيزا/فوري/محافظ 💳 • الشراء بينفعّل كل المحاضرات فورًا</p>
               </div>
             )}
             {own.allOwned && (
@@ -282,7 +282,7 @@ function CourseDetailInner() {
 
             {/* lectures list */}
             <div className="space-y-2">
-              <h2 className="font-bold text-sm text-gray-500">محتوى الكورس ({own.totalLectures} محاضرة)</h2>
+              <h2 className="font-bold text-sm text-slate-500">محتوى الكورس ({own.totalLectures} محاضرة)</h2>
               {lectures.map((l, i) => {
                 const owned = ownedIds.has(l.id);
                 const free = isFreeLecture(l);
@@ -290,35 +290,35 @@ function CourseDetailInner() {
                   <Link
                     key={l.id}
                     href={`/lectures/${l.id}`}
-                    className="flex items-center gap-3 bg-white dark:bg-gray-800 rounded-2xl p-3.5 border dark:border-gray-700 hover:shadow-md hover:border-violet-200 dark:hover:border-violet-800 transition group"
+                    className="flex items-center gap-3 bg-white dark:bg-navy-800 rounded-2xl p-3.5 border dark:border-navy-700 hover:shadow-md hover:border-brand-200 dark:hover:border-brand-800 transition group"
                   >
                     <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black shrink-0 ${
-                      owned ? "bg-green-100 text-green-700" : free ? "bg-emerald-50 text-emerald-600" : "bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-300"
+                      owned ? "bg-green-100 text-green-700" : free ? "bg-brand-50 text-brand-600" : "bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-300"
                     }`}>
                       {owned ? <BadgeCheck size={18} /> : i + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-sm truncate group-hover:text-violet-600 transition-colors">{l.title}</p>
-                      <p className="text-[11px] text-gray-400 flex items-center gap-2 mt-0.5">
+                      <p className="font-bold text-sm truncate group-hover:text-brand-600 transition-colors">{l.title}</p>
+                      <p className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
                         {!!l.durationMin && <span className="flex items-center gap-0.5"><Clock3 size={10} /> {l.durationMin} د</span>}
                         {owned && <span className="text-green-600 font-bold">عندك ✅</span>}
-                        {!owned && free && <span className="text-emerald-600 font-bold flex items-center gap-0.5"><Gift size={10} /> معاينة مجانية</span>}
+                        {!owned && free && <span className="text-brand-600 font-bold flex items-center gap-0.5"><Gift size={10} /> معاينة مجانية</span>}
                       </p>
                     </div>
                     <div className="shrink-0 text-left">
                       {owned ? (
                         <span className="text-[11px] text-green-600 font-bold">شوفها ▶</span>
                       ) : free ? (
-                        <span className="text-[11px] text-emerald-600 font-bold">شوفها ببلاش ▶</span>
+                        <span className="text-[11px] text-brand-600 font-bold">شوفها ببلاش ▶</span>
                       ) : (
-                        <span className="text-[11px] text-gray-400 flex items-center gap-1"><Lock size={11} /> {l.priceEgp} ج.م</span>
+                        <span className="text-[11px] text-slate-400 flex items-center gap-1"><Lock size={11} /> {l.priceEgp} ج.م</span>
                       )}
                     </div>
                   </Link>
                 );
               })}
               {lectures.length === 0 && (
-                <p className="text-xs text-gray-400 text-center p-6 bg-white dark:bg-gray-800 rounded-2xl border dark:border-gray-700">
+                <p className="text-xs text-slate-400 text-center p-6 bg-white dark:bg-navy-800 rounded-2xl border dark:border-navy-700">
                   الكورس ده لسه مفيهوش محاضرات منشورة — ارجع له كمان شوية.
                 </p>
               )}
@@ -334,8 +334,8 @@ export default function CourseDetailPage() {
   return (
     <ErrorBoundary>
       <Suspense fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] dark:bg-gray-900">
-          <Loader2 className="animate-spin text-violet-500" size={32} />
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-navy-900">
+          <Loader2 className="animate-spin text-brand-500" size={32} />
         </div>
       }>
         <CourseDetailInner />

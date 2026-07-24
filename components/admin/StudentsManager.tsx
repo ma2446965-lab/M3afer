@@ -17,11 +17,11 @@ const fmtDate = (v: any): string => {
 const statusOf = (u: any) => {
   const active = u.subscriptionActive === true || u.subscribed === true;
   if (!active)
-    return { label: "غير مشترك", cls: "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-300" };
+    return { label: "غير مشترك", cls: "bg-slate-100 text-slate-500 dark:bg-navy-700 dark:text-gray-300" };
   if (u.subscriptionEndDate) {
     const end = new Date(u.subscriptionEndDate);
     if (!isNaN(+end) && end.getTime() < Date.now())
-      return { label: "منتهي الصلاحية", cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" };
+      return { label: "منتهي الصلاحية", cls: "bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300" };
   }
   return { label: "نشط ✅", cls: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" };
 };
@@ -121,11 +121,11 @@ export default function StudentsManager() {
   return (
     <div className="space-y-6">
       {/* ===== Read-only students table ===== */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border dark:border-gray-700 overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b dark:border-gray-700">
+      <div className="bg-white dark:bg-navy-800 rounded-2xl border dark:border-navy-700 overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b dark:border-navy-700">
           <h2 className="font-bold flex items-center gap-2">
             <GraduationCap size={18} /> الطلاب
-            <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 px-2 py-0.5 rounded-full">
+            <span className="text-xs bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-gray-300 px-2 py-0.5 rounded-full">
               {students.length}
             </span>
           </h2>
@@ -133,7 +133,7 @@ export default function StudentsManager() {
             <span className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 px-2 py-1 rounded-full font-bold">
               نشط: {activeCount}
             </span>
-            <span className="bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 px-2 py-1 rounded-full font-bold">
+            <span className="bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-300 px-2 py-1 rounded-full font-bold">
               منتهي: {expiredCount}
             </span>
           </div>
@@ -141,25 +141,25 @@ export default function StudentsManager() {
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             placeholder="بحث بالإيميل أو UUID..."
-            className="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm w-full sm:w-64"
+            className="px-4 py-2 rounded-xl border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-700 text-sm w-full sm:w-64"
           />
         </div>
 
         {listLoading ? (
           <div className="p-10 flex justify-center">
-            <Loader2 className="animate-spin text-gray-400" />
+            <Loader2 className="animate-spin text-slate-400" />
           </div>
         ) : listError ? (
           <p className="p-6 text-sm text-red-500">{listError}</p>
         ) : filtered.length === 0 ? (
-          <p className="p-8 text-center text-sm text-gray-400">
+          <p className="p-8 text-center text-sm text-slate-400">
             {students.length === 0 ? "مفيش طلاب مسجلين لسه" : "مفيش نتايج للبحث ده"}
           </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[760px]">
               <thead>
-                <tr className="text-xs text-gray-400 border-b dark:border-gray-700 text-right">
+                <tr className="text-xs text-slate-400 border-b dark:border-navy-700 text-right">
                   <th className="p-3 font-medium">الطالب</th>
                   <th className="p-3 font-medium">UUID</th>
                   <th className="p-3 font-medium">الصف / الشعبة</th>
@@ -174,7 +174,7 @@ export default function StudentsManager() {
                 {filtered.map((u) => {
                   const status = statusOf(u);
                   return (
-                    <tr key={u.docId} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                    <tr key={u.docId} className="hover:bg-slate-50 dark:hover:bg-gray-700/30">
                       <td className="p-3">
                         <div className="font-bold">{u.email || "بدون إيميل"}</div>
                         {u.role === "admin" && (
@@ -188,7 +188,7 @@ export default function StudentsManager() {
                           <button
                             onClick={() => navigator.clipboard?.writeText(u.uuid).catch(() => {})}
                             title="نسخ UUID كامل"
-                            className="flex items-center gap-1 font-mono text-[11px] text-gray-400 hover:text-indigo-500"
+                            className="flex items-center gap-1 font-mono text-[11px] text-slate-400 hover:text-brand-500"
                           >
                             {u.uuid.slice(0, 8)}… <Copy size={11} />
                           </button>
@@ -196,12 +196,12 @@ export default function StudentsManager() {
                           <span className="text-gray-300">—</span>
                         )}
                       </td>
-                      <td className="p-3 text-gray-500 dark:text-gray-400 text-xs">
+                      <td className="p-3 text-slate-500 dark:text-slate-400 text-xs">
                         {u.grade || "—"}
                         {u.track ? ` • ${u.track}` : ""}
                       </td>
                       <td className="p-3">
-                        <span className="capitalize text-xs font-bold bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 px-2 py-1 rounded-full">
+                        <span className="capitalize text-xs font-bold bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-300 px-2 py-1 rounded-full">
                           {u.subscription || "free"}
                         </span>
                       </td>
@@ -210,10 +210,10 @@ export default function StudentsManager() {
                           {status.label}
                         </span>
                       </td>
-                      <td className="p-3 text-gray-500 dark:text-gray-400 text-xs whitespace-nowrap">
+                      <td className="p-3 text-slate-500 dark:text-slate-400 text-xs whitespace-nowrap">
                         {fmtDate(u.subscriptionEndDate)}
                       </td>
-                      <td className="p-3 text-gray-500 dark:text-gray-400 text-xs whitespace-nowrap">
+                      <td className="p-3 text-slate-500 dark:text-slate-400 text-xs whitespace-nowrap">
                         {fmtDate(u.createdAt)}
                       </td>
                       <td className="p-3 whitespace-nowrap">
@@ -221,7 +221,7 @@ export default function StudentsManager() {
                           <Link
                             href={`/messages?support=${u.docId}`}
                             title="فتح محادثة دعم مع الطالب ده"
-                            className="inline-flex items-center gap-1 text-[11px] font-bold bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-300 hover:bg-sky-100 px-2.5 py-1.5 rounded-full transition"
+                            className="inline-flex items-center gap-1 text-[11px] font-bold bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-300 hover:bg-brand-100 px-2.5 py-1.5 rounded-full transition"
                           >
                             <MessagesSquare size={11} /> مراسلة
                           </Link>
@@ -237,7 +237,7 @@ export default function StudentsManager() {
       </div>
 
       {/* ===== Subscription management by UUID (kept from previous admin page) ===== */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border dark:border-gray-700">
+      <div className="bg-white dark:bg-navy-800 rounded-2xl p-6 border dark:border-navy-700">
         <h2 className="font-bold mb-4 flex items-center gap-2">
           <Search size={18} /> إدارة اشتراك طالب (بالبحث بـ UUID)
         </h2>
@@ -246,7 +246,7 @@ export default function StudentsManager() {
             value={searchUuid}
             onChange={(e) => setSearchUuid(e.target.value)}
             placeholder="الصق UUID الطالب هنا (بيظهر في صفحة حسابه)"
-            className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 font-mono text-sm"
+            className="flex-1 px-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-700 font-mono text-sm"
           />
           <button
             onClick={handleSearch}
@@ -263,26 +263,26 @@ export default function StudentsManager() {
         )}
 
         {foundUser && (
-          <div className="mt-6 bg-gray-50 dark:bg-gray-700/30 rounded-2xl p-5 border-2 border-indigo-200 dark:border-indigo-800">
+          <div className="mt-6 bg-slate-50 dark:bg-navy-700/30 rounded-2xl p-5 border-2 border-brand-200 dark:border-indigo-800">
             <h3 className="font-bold mb-4 flex items-center gap-2">
-              <Crown size={16} className="text-amber-500" /> المستخدم الموجود
+              <Crown size={16} className="text-accent-500" /> المستخدم الموجود
             </h3>
-            <div className="space-y-2 text-sm bg-white dark:bg-gray-800 p-4 rounded-xl">
+            <div className="space-y-2 text-sm bg-white dark:bg-navy-800 p-4 rounded-xl">
               <p>
-                <span className="text-gray-500">Email:</span> <span className="font-bold">{foundUser.email}</span>
+                <span className="text-slate-500">Email:</span> <span className="font-bold">{foundUser.email}</span>
               </p>
               <p>
-                <span className="text-gray-500">صف:</span> {foundUser.grade} {foundUser.track && `• ${foundUser.track}`}
+                <span className="text-slate-500">صف:</span> {foundUser.grade} {foundUser.track && `• ${foundUser.track}`}
               </p>
               <p>
-                <span className="text-gray-500">الباقة الحالية:</span>{" "}
-                <span className="font-bold capitalize bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 px-2 py-0.5 rounded-full">
+                <span className="text-slate-500">الباقة الحالية:</span>{" "}
+                <span className="font-bold capitalize bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-300 px-2 py-0.5 rounded-full">
                   {foundUser.subscription}
                 </span>{" "}
                 {foundUser.subscriptionActive ? "• مفعل" : "• غير مفعل"}
               </p>
               <p>
-                <span className="text-gray-500">نهاية الاشتراك:</span> {fmtDate(foundUser.subscriptionEndDate)}
+                <span className="text-slate-500">نهاية الاشتراك:</span> {fmtDate(foundUser.subscriptionEndDate)}
               </p>
             </div>
 
@@ -296,7 +296,7 @@ export default function StudentsManager() {
                     className={`p-3 rounded-xl border-2 text-sm font-bold capitalize ${
                       foundUser.subscription === tier
                         ? "border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700"
-                        : "border-gray-200 dark:border-gray-700 hover:border-indigo-200"
+                        : "border-slate-200 dark:border-navy-700 hover:border-brand-200"
                     }`}
                   >
                     {tier}
@@ -304,14 +304,14 @@ export default function StudentsManager() {
                 ))}
               </div>
               <div className="mt-3">
-                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1 block">
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 block">
                   تاريخ انتهاء الاشتراك (فارغ = 30 يوم من دلوقتي عند التفعيل)
                 </label>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-700 text-sm"
                 />
               </div>
               <div className="mt-3 flex gap-2">

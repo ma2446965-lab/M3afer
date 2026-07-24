@@ -89,49 +89,49 @@ function SchedulePageInner() {
 
   if (loading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] dark:bg-gray-900">
-        <Loader2 className="animate-spin text-indigo-500" size={32} />
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-navy-900">
+        <Loader2 className="animate-spin text-brand-500" size={32} />
       </div>
     );
   }
 
   const BookingCard = ({ b, isPast }: { b: Booking; isPast?: boolean }) => (
     <div
-      className={`bg-white dark:bg-gray-800 rounded-2xl border dark:border-gray-700 p-4 flex items-center gap-3 ${
+      className={`bg-white dark:bg-navy-800 rounded-2xl border dark:border-navy-700 p-4 flex items-center gap-3 ${
         isPast ? "opacity-60" : ""
       }`}
     >
       <div
         className={`w-11 h-11 rounded-xl flex flex-col items-center justify-center shrink-0 ${
-          isPast ? "bg-gray-100 dark:bg-gray-700" : "bg-indigo-50 dark:bg-indigo-900/20"
+          isPast ? "bg-slate-100 dark:bg-navy-700" : "bg-brand-50 dark:bg-brand-900/20"
         }`}
       >
         <span
           className={`text-sm font-black leading-none ${
-            isPast ? "text-gray-500" : "text-indigo-700 dark:text-indigo-300"
+            isPast ? "text-slate-500" : "text-indigo-700 dark:text-brand-300"
           }`}
         >
           {dateBadgeParts(b.date).day}
         </span>
-        <span className={`text-[9px] ${isPast ? "text-gray-400" : "text-indigo-500/70"}`}>
+        <span className={`text-[9px] ${isPast ? "text-slate-400" : "text-brand-500/70"}`}>
           {dateBadgeParts(b.date).monthYear}
         </span>
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-bold text-sm truncate">
-          {b.subjectName} <span className="font-normal text-gray-400">• {b.teacherName}</span>
+          {b.subjectName} <span className="font-normal text-slate-400">• {b.teacherName}</span>
         </p>
-        <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
+        <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
           <Clock size={12} /> {formatSlotDate(b.date)} — {formatTimeAr(b.time)}
         </p>
       </div>
       {isPast ? (
-        <span className="text-xs font-bold text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1.5 rounded-full">
+        <span className="text-xs font-bold text-slate-400 bg-slate-100 dark:bg-navy-700 px-3 py-1.5 rounded-full">
           خلصت ✔
         </span>
       ) : (
         <div className="flex flex-col items-end gap-1.5">
-          <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full">
+          <span className="text-[11px] font-bold text-brand-600 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/30 px-2 py-0.5 rounded-full">
             {daysLabel(b)}
           </span>
           <button
@@ -148,10 +148,10 @@ function SchedulePageInner() {
   );
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] dark:bg-gray-900 pb-24 md:pb-0">
+    <div className="min-h-screen bg-slate-50 dark:bg-navy-900 pb-24 md:pb-0">
 
       {/* Header */}
-      <div className="bg-gradient-to-br from-indigo-500 via-violet-600 to-purple-600 text-white p-6 pt-6 pb-8 md:pt-10 rounded-b-[32px] relative overflow-hidden">
+      <div className="bg-gradient-to-br from-brand-500 via-brand-600 to-navy-700 text-white p-6 pt-6 pb-8 md:pt-10 rounded-b-[32px] relative overflow-hidden">
         <div className="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full blur-3xl -translate-y-20 translate-x-20" />
         <div className="relative max-w-5xl mx-auto">
           <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -171,7 +171,7 @@ function SchedulePageInner() {
         )}
 
         {profile && !profile.subscribed && (
-          <p className="text-sm p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border border-amber-100 dark:border-amber-900/30 leading-relaxed">
+          <p className="text-sm p-3 rounded-xl bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-300 border border-accent-100 dark:border-accent-900/30 leading-relaxed">
             💎 اشتراكك مش فعّال حاليًا — تقدر تشوف حصصك السابقة، بس الحجز الجديد محتاج اشتراك.{" "}
             <Link href="/subscription" className="font-bold underline">جدد الاشتراك (من 150 ج.م/شهر)</Link>
           </p>
@@ -179,18 +179,18 @@ function SchedulePageInner() {
 
         {listLoading ? (
           <div className="p-10 flex justify-center">
-            <Loader2 className="animate-spin text-gray-400" />
+            <Loader2 className="animate-spin text-slate-400" />
           </div>
         ) : listError ? (
           <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-4 rounded-xl">{listError}</p>
         ) : bookings.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border dark:border-gray-700 p-10 text-center">
+          <div className="bg-white dark:bg-navy-800 rounded-2xl border dark:border-navy-700 p-10 text-center">
             <div className="text-5xl mb-3">🗓️</div>
             <p className="font-bold">لسه ماعندكش حجوزات</p>
-            <p className="text-sm text-gray-500 mt-1">اختار مادة واحجز أول ميعاد ليك — التأكيد فوري</p>
+            <p className="text-sm text-slate-500 mt-1">اختار مادة واحجز أول ميعاد ليك — التأكيد فوري</p>
             <Link
               href="/booking"
-              className="inline-flex items-center gap-2 mt-5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-xl text-sm"
+              className="inline-flex items-center gap-2 mt-5 bg-brand-600 hover:bg-brand-700 text-white font-bold px-6 py-3 rounded-xl text-sm"
             >
               <CalendarPlus size={16} /> احجز حصتك دلوقتي
             </Link>
@@ -209,7 +209,7 @@ function SchedulePageInner() {
             )}
             {past.length > 0 && (
               <div>
-                <h2 className="font-bold text-lg mb-3 text-gray-500">حصص سابقة 🕘</h2>
+                <h2 className="font-bold text-lg mb-3 text-slate-500">حصص سابقة 🕘</h2>
                 <div className="space-y-2">
                   {past.map((b) => (
                     <BookingCard key={b.id} b={b} isPast />

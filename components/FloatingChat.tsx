@@ -1,9 +1,10 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, Sparkles, Bot, User as UserIcon } from "lucide-react";
+import { X, Send, Sparkles, User as UserIcon } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";
 import { generateWithGemini, AIPersona } from "@/lib/gemini";
+import Image from "next/image";
 
 interface Message {
   id: string;
@@ -13,7 +14,7 @@ interface Message {
 }
 
 export default function FloatingChat() {
-  const { isFabVisible, setFabVisible, language } = useTheme();
+  const { isFabVisible, setFabVisible } = useTheme();
   const { profile } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [persona, setPersona] = useState<AIPersona>("ing.Mohamed");
@@ -22,11 +23,8 @@ export default function FloatingChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [position, setPosition] = useState({ x: 20, y: 100 });
   const [isDragging, setIsDragging] = useState(false);
-  // On md+ the persistent SideNav occupies the inline-start edge (256px) —
-  // shift the FAB so it never sits on top of it.
   const [isDesktop, setIsDesktop] = useState(false);
   const fabRef = useRef<HTMLDivElement>(null);
-  const chatRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -51,16 +49,16 @@ export default function FloatingChat() {
     if (!profile) return;
     if (messages.length === 0) {
       const welcome = persona === "ing.Mohamed"
-        ? `أهلا يا بشمهندس! ${profile.email.split('@')[0]} 👋\nأنا بشمهندس محمد، صاحبك في رحلة الثانوية العامة.\n${profile.grade} - ${profile.track || 'عام'}\n\nجاهز نحل أي مسألة تراكمية أو نـ debug أي معلومة واقفة معاك؟ ابعتلي اللي واقف معاك! 🚀`
-        : `أهلاً يا دكتور/دكتورة المستقبل! 🌸\nأنا دكتورة بسملة، وموجودة هنا عشان أساعدك خطوة بخطوة.\nعرفت إنك في ${profile.grade} - ${profile.track || 'عام'}، وضغط الثانوية العامة طبيعي جداً، بس إحنا هنعديه سوا 💙\n\nقولي إيه المادة اللي حاسس إنها تقيلة عليك النهاردة؟`;
-      
+        ? `أهلا يا بشمهندس! ${profile.email.split('@')[0]} 👋\nأنا بشمهندس محمد، صاحبك في رحلة الثانوية العامة.\n${profile.grade} - ${profile.track || 'عام'}\n\nجاهز نحل أي مسألة تراكمية أو نـ debug أي معلومة واقفة معاك؟ ابعتلي اللي واقف معاك!`
+        : `أهلاً يا دكتور/دكتورة المستقبل!\nأنا دكتورة بسملة، وموجودة هنا عشان أساعدك خطوة بخطوة.\nعرفت إنك في ${profile.grade} - ${profile.track || 'عام'}، وضغط الثانوية العامة طبيعي جداً، بس إحنا هنعديه سوا.\n\nقولي إيه المادة اللي حاسس إنها تقيلة عليك النهاردة؟`;
+
       setMessages([{ id: "welcome", role: "assistant", content: welcome, timestamp: new Date() }]);
     }
   }, [isOpen, persona]);
 
   const handleSend = async () => {
     if (!input.trim() || !profile) return;
-    
+
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: input, timestamp: new Date() };
     setMessages(prev => [...prev, userMsg]);
     setInput("");
@@ -73,7 +71,7 @@ export default function FloatingChat() {
         profile.grade || "الصف الثالث الثانوي",
         profile.track || "علمي علوم"
       );
-      
+
       const assistantMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
@@ -86,7 +84,7 @@ export default function FloatingChat() {
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "ياااه النت بيهنج شوية 😅 جرب تاني كمان ثواني!",
+        content: "ياااه النت بيهنج شوية، جرب تاني كمان ثواني!",
         timestamp: new Date()
       }]);
     } finally {
@@ -101,10 +99,7 @@ export default function FloatingChat() {
     const startY = e.clientY - position.y;
 
     const handleMouseMove = (e: MouseEvent) => {
-      setPosition({
-        x: e.clientX - startX,
-        y: e.clientY - startY
-      });
+      setPosition({ x: e.clientX - startX, y: e.clientY - startY });
     };
 
     const handleMouseUp = () => {
@@ -119,6 +114,9 @@ export default function FloatingChat() {
 
   if (!isFabVisible) return null;
 
+  const personaAvatar = persona === "ing.Mohamed" ? "/avatars/mohamed.png" : "/avatars/basmala.png";
+  const personaName = persona === "ing.Mohamed" ? "بشمهندس محمد" : "دكتورة بسملة";
+
   return (
     <>
       {/* FAB Button */}
@@ -132,13 +130,13 @@ export default function FloatingChat() {
           <div className="relative">
             <button
               onClick={() => !isDragging && setIsOpen(true)}
-              className="w-14 h-14 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-full shadow-[0_8px_24px_rgba(14,165,233,0.4)] flex items-center justify-center text-white hover:scale-110 transition-transform animate-float"
+              className="w-14 h-14 bg-brand-gradient rounded-full shadow-[0_8px_24px_rgba(26,107,150,0.4)] flex items-center justify-center text-white hover:scale-110 transition-transform animate-float overflow-hidden"
             >
-              <MessageCircle size={26} />
+              <Image src={personaAvatar} alt={personaName} width={56} height={56} className="w-full h-full object-cover" />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); setFabVisible(false); }}
-              className="absolute -top-1 -right-1 w-5 h-5 bg-gray-800 text-white rounded-full flex items-center justify-center text-[10px] hover:bg-red-500 transition"
+              className="absolute -top-1 -right-1 w-5 h-5 bg-navy-800 text-white rounded-full flex items-center justify-center text-[10px] hover:bg-red-500 transition"
             >
               <X size={12} />
             </button>
@@ -151,17 +149,17 @@ export default function FloatingChat() {
       {isOpen && (
         <div className="fixed inset-0 z-[60] flex flex-col justify-end md:justify-end md:items-end md:p-6">
           <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
-          
-          <div ref={chatRef} className="relative w-full md:w-[420px] h-[85vh] md:h-[600px] bg-white dark:bg-gray-900 rounded-t-[32px] md:rounded-[24px] shadow-2xl flex flex-col overflow-hidden border border-gray-200 dark:border-gray-800">
+
+          <div className="relative w-full md:w-[420px] h-[85vh] md:h-[600px] bg-white dark:bg-navy-900 rounded-t-[32px] md:rounded-[24px] shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-navy-800">
             {/* Header */}
-            <div className="bg-gradient-to-br from-sky-500 to-indigo-600 p-4 text-white">
+            <div className="bg-brand-gradient p-4 text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                    <Bot size={20} />
+                  <div className="w-11 h-11 rounded-full overflow-hidden border-2 border-white/30 shadow-lg">
+                    <Image src={personaAvatar} alt={personaName} width={44} height={44} className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <h3 className="font-bold">{persona === "ing.Mohamed" ? "بشمهندس محمد" : "دكتورة بسملة"}</h3>
+                    <h3 className="font-bold">{personaName}</h3>
                     <p className="text-xs text-white/80 flex items-center gap-1">
                       <span className="w-2 h-2 bg-green-300 rounded-full animate-pulse inline-block"></span>
                       متصل الآن • مساعد ثانوية عامة
@@ -178,30 +176,32 @@ export default function FloatingChat() {
               {/* Persona Switcher */}
               <div className="mt-4 grid grid-cols-2 gap-2">
                 <button
-                  onClick={() => setPersona("ing.Mohamed")}
-                  className={`p-2.5 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2 ${persona === "ing.Mohamed" ? "bg-white text-indigo-600 shadow" : "bg-white/15 text-white hover:bg-white/25"}`}
+                  onClick={() => { setPersona("ing.Mohamed"); setMessages([]); }}
+                  className={`p-2 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2 ${persona === "ing.Mohamed" ? "bg-white text-brand-700 shadow" : "bg-white/15 text-white hover:bg-white/25"}`}
                 >
-                  👨‍💻 ing.Mohamed
+                  <Image src="/avatars/mohamed.png" alt="" width={24} height={24} className="w-6 h-6 rounded-full object-cover" />
+                  بشمهندس محمد
                 </button>
                 <button
-                  onClick={() => setPersona("Dr.Basmala")}
-                  className={`p-2.5 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2 ${persona === "Dr.Basmala" ? "bg-white text-indigo-600 shadow" : "bg-white/15 text-white hover:bg-white/25"}`}
+                  onClick={() => { setPersona("Dr.Basmala"); setMessages([]); }}
+                  className={`p-2 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2 ${persona === "Dr.Basmala" ? "bg-white text-brand-700 shadow" : "bg-white/15 text-white hover:bg-white/25"}`}
                 >
-                  👩‍⚕️ Dr.Basmala
+                  <Image src="/avatars/basmala.png" alt="" width={24} height={24} className="w-6 h-6 rounded-full object-cover" />
+                  دكتورة بسملة
                 </button>
               </div>
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-800/50">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 dark:bg-navy-800/50">
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex gap-2 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === "user" ? "bg-indigo-600 text-white" : "bg-white dark:bg-gray-700 shadow border"}`}>
-                    {msg.role === "user" ? <UserIcon size={16} /> : persona === "ing.Mohamed" ? "👨‍💻" : "👩‍⚕️"}
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden ${msg.role === "user" ? "bg-brand-600 text-white" : "bg-white dark:bg-navy-700 shadow border"}`}>
+                    {msg.role === "user" ? <UserIcon size={16} /> : <Image src={personaAvatar} alt="" width={32} height={32} className="w-full h-full object-cover" />}
                   </div>
-                  <div className={`max-w-[75%] rounded-2xl p-3 shadow-sm ${msg.role === "user" ? "bg-indigo-600 text-white rounded-br-sm" : "bg-white dark:bg-gray-800 rounded-bl-sm border dark:border-gray-700"}`}>
+                  <div className={`max-w-[75%] rounded-2xl p-3 shadow-sm ${msg.role === "user" ? "bg-brand-600 text-white rounded-br-sm" : "bg-white dark:bg-navy-800 rounded-bl-sm border dark:border-navy-700"}`}>
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-                    <span className={`text-[10px] mt-1 block ${msg.role === "user" ? "text-white/70" : "text-gray-400"}`}>
+                    <span className={`text-[10px] mt-1 block ${msg.role === "user" ? "text-white/70" : "text-slate-400"}`}>
                       {msg.timestamp.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}
                     </span>
                   </div>
@@ -209,14 +209,14 @@ export default function FloatingChat() {
               ))}
               {isLoading && (
                 <div className="flex gap-2">
-                  <div className="w-8 h-8 rounded-full bg-white dark:bg-gray-700 shadow border flex items-center justify-center">
-                    {persona === "ing.Mohamed" ? "👨‍💻" : "👩‍⚕️"}
+                  <div className="w-8 h-8 rounded-full bg-white dark:bg-navy-700 shadow border flex items-center justify-center overflow-hidden">
+                    <Image src={personaAvatar} alt="" width={32} height={32} className="w-full h-full object-cover" />
                   </div>
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl rounded-bl-sm p-3 border dark:border-gray-700 shadow-sm">
+                  <div className="bg-white dark:bg-navy-800 rounded-2xl rounded-bl-sm p-3 border dark:border-navy-700 shadow-sm">
                     <div className="flex gap-1">
-                      <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                      <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0.2s]" />
-                      <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0.4s]" />
+                      <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" />
+                      <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:0.2s]" />
+                      <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:0.4s]" />
                     </div>
                   </div>
                 </div>
@@ -225,24 +225,24 @@ export default function FloatingChat() {
             </div>
 
             {/* Input */}
-            <div className="p-3 bg-white dark:bg-gray-900 border-t dark:border-gray-800">
-              <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-full px-4 py-2">
+            <div className="p-3 bg-white dark:bg-navy-900 border-t dark:border-navy-800">
+              <div className="flex items-center gap-2 bg-slate-100 dark:bg-navy-800 rounded-full px-4 py-2">
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                  placeholder={language === "ar" ? "اسأل أي حاجة في المنهج..." : "Ask anything..."}
-                  className="flex-1 bg-transparent outline-none text-sm placeholder:text-gray-400"
+                  placeholder="اسأل أي حاجة في المنهج..."
+                  className="flex-1 bg-transparent outline-none text-sm placeholder:text-slate-400"
                 />
                 <button
                   onClick={handleSend}
                   disabled={!input.trim() || isLoading}
-                  className="w-8 h-8 bg-gradient-to-br from-sky-500 to-indigo-600 text-white rounded-full flex items-center justify-center hover:scale-105 transition disabled:opacity-50"
+                  className="w-8 h-8 bg-brand-gradient text-white rounded-full flex items-center justify-center hover:scale-105 transition disabled:opacity-50"
                 >
                   <Send size={16} />
                 </button>
               </div>
-              <p className="text-[10px] text-center text-gray-400 mt-2 flex items-center justify-center gap-1">
+              <p className="text-[10px] text-center text-slate-400 mt-2 flex items-center justify-center gap-1">
                 <Sparkles size={10} /> مدعوم بـ Gemini AI • مخصص لمنهج {profile?.grade} {profile?.track}
               </p>
             </div>

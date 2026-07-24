@@ -56,10 +56,10 @@ function SignupPageInner() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800">
-      <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-[32px] shadow-xl p-8">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-brand-50 to-slate-50 dark:from-navy-900 dark:to-navy-800">
+      <div className="w-full max-w-md bg-white dark:bg-navy-800 rounded-2xl shadow-xl p-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-black bg-gradient-to-r from-sky-500 to-indigo-600 bg-clip-text text-transparent">Meafer.ai</h1>
+          <h1 className="text-3xl font-black bg-gradient-to-r from-brand-700 to-brand-500 bg-clip-text text-transparent">Meafer.ai</h1>
           <h2 className="text-xl font-bold mt-4">اعمل حساب جديد 🎓</h2>
           <p className="text-gray-500 text-sm mt-1">ابدأ رحلة الثانوية العامة مع AI</p>
         </div>
@@ -69,20 +69,20 @@ function SignupPageInner() {
           
           <div>
             <label className="text-sm font-medium">الإيميل</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="student@example.com" className="mt-1 w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 outline-none focus:ring-2 focus:ring-indigo-500" required />
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="student@example.com" className="mt-1 w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-navy-700 bg-white dark:bg-navy-700 outline-none focus:ring-2 focus:ring-brand-500" required />
           </div>
           <div>
             <label className="text-sm font-medium">الباسورد (6 حروف على الأقل)</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="mt-1 w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 outline-none focus:ring-2 focus:ring-indigo-500" required />
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="mt-1 w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-navy-700 bg-white dark:bg-navy-700 outline-none focus:ring-2 focus:ring-brand-500" required />
           </div>
 
-          <button disabled={loading} className="w-full bg-gradient-to-r from-sky-500 to-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-indigo-500/25 hover:scale-[1.02] transition-all disabled:opacity-50">
+          <button disabled={loading} className="w-full bg-gradient-to-r from-brand-700 to-brand-500 text-white py-3 rounded-xl font-bold shadow-lg shadow-brand-700/25 hover:scale-[1.02] transition-all disabled:opacity-50">
             {loading ? "جاري التسجيل..." : "سجل وابدأ مجاناً ✨"}
           </button>
         </form>
 
         <p className="text-center text-sm text-gray-500 mt-6">
-          عندك حساب؟ <Link href={`/auth/login${next !== "/" ? `?next=${encodeURIComponent(next)}` : ""}`} className="text-indigo-600 font-bold hover:underline">سجل دخول</Link>
+          عندك حساب؟ <Link href={`/auth/login${next !== "/" ? `?next=${encodeURIComponent(next)}` : ""}`} className="text-brand-600 font-bold hover:underline">سجل دخول</Link>
         </p>
       </div>
     </div>

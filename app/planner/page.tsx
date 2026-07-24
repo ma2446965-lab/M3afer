@@ -33,8 +33,8 @@ import {
 const DAYS = ["السبت", "الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"];
 
 const STATUS_META: Record<string, { label: string; cls: string }> = {
-  awaiting_payment: { label: "بانتظار الدفع 💳", cls: "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300" },
-  pending: { label: "قيد التنفيذ ⏳", cls: "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300" },
+  awaiting_payment: { label: "بانتظار الدفع 💳", cls: "bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-gray-300" },
+  pending: { label: "قيد التنفيذ ⏳", cls: "bg-accent-100 dark:bg-accent-900/40 text-accent-700 dark:text-accent-300" },
   fulfilled: { label: "تم التسليم ✅", cls: "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300" }
 };
 
@@ -56,7 +56,7 @@ function PaymentBanner() {
     },
     pending: {
       text: "⏳ استلمنا طلبك — أكمل الدفع بالطريقة اللي اخترتها (فوري/محفظة) وهيتأكد تلقائيًا.",
-      cls: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-100 dark:border-amber-900/30"
+      cls: "bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-300 border-accent-100 dark:border-accent-900/30"
     },
     failed: {
       text: "❌ الدفع ما تمش. طلبك محفوظ — اضغط «أكمل الدفع» جنبه وجرب تاني.",
@@ -93,7 +93,7 @@ function FulfilledImage({ path, note }: { path: string; note?: string | null }) 
       <button
         onClick={load}
         disabled={loading}
-        className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-60"
+        className="w-full bg-gradient-to-r from-brand-600 to-navy-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-60"
       >
         {loading ? <Loader2 size={18} className="animate-spin" /> : <ImageIcon size={18} />}
         {loading ? "بنحضّر جدولك..." : "عرض صورة جدولي 🎉"}
@@ -103,18 +103,18 @@ function FulfilledImage({ path, note }: { path: string; note?: string | null }) 
   return (
     <div className="space-y-2">
       <a href={url} target="_blank" rel="noreferrer" className="block">
-        <img src={url} alt="جدول المذاكرة" className="w-full rounded-xl border dark:border-gray-700" />
+        <img src={url} alt="جدول المذاكرة" className="w-full rounded-xl border dark:border-navy-700" />
       </a>
       <a
         href={url}
         target="_blank"
         rel="noreferrer"
-        className="text-xs text-emerald-600 dark:text-emerald-400 font-bold inline-flex items-center gap-1"
+        className="text-xs text-brand-600 dark:text-emerald-400 font-bold inline-flex items-center gap-1"
       >
         <ExternalLink size={12} /> فتح/تحميل بجودة كاملة
       </a>
       {err && <p className="text-xs text-red-500">{err}</p>}
-      {note && <p className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 p-2.5 rounded-xl">📝 ملاحظة من الإدارة: {note}</p>}
+      {note && <p className="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-700/50 p-2.5 rounded-xl">📝 ملاحظة من الإدارة: {note}</p>}
     </div>
   );
 }
@@ -254,8 +254,8 @@ function PlannerPageInner() {
 
   if (loading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] dark:bg-gray-900">
-        <Loader2 className="animate-spin text-teal-500" size={32} />
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-navy-900">
+        <Loader2 className="animate-spin text-brand-500" size={32} />
       </div>
     );
   }
@@ -263,10 +263,10 @@ function PlannerPageInner() {
   const activePending = requests.some((r) => r.status === "pending");
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] dark:bg-gray-900 pb-24 md:pb-0">
+    <div className="min-h-screen bg-slate-50 dark:bg-navy-900 pb-24 md:pb-0">
 
       {/* Header */}
-      <div className="bg-gradient-to-br from-teal-500 via-emerald-500 to-green-600 text-white p-6 pt-6 pb-8 md:pt-10 rounded-b-[32px] relative overflow-hidden">
+      <div className="bg-gradient-to-br from-brand-600 via-brand-500 to-navy-700 text-white p-6 pt-6 pb-8 md:pt-10 rounded-b-[32px] relative overflow-hidden">
         <div className="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full blur-3xl -translate-y-20 translate-x-20" />
         <div className="relative max-w-5xl mx-auto">
           <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -284,28 +284,28 @@ function PlannerPageInner() {
         </Suspense>
 
         {/* How it works */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700">
-          <h3 className="font-bold text-sm mb-3 flex items-center gap-2"><Sparkles size={16} className="text-teal-500" /> بتشتغل إزاي؟</h3>
-          <ol className="text-sm space-y-2 text-gray-600 dark:text-gray-300">
-            <li className="flex gap-2"><span className="w-5 h-5 bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 rounded-full text-xs font-bold flex items-center justify-center shrink-0">1</span> املى الفورم بمواعيدك ومشغولياتك وأولوياتك (دقيقتين بس)</li>
-            <li className="flex gap-2"><span className="w-5 h-5 bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 rounded-full text-xs font-bold flex items-center justify-center shrink-0">2</span> ادفع {PLANNER_PRODUCT.priceEgp} ج.م بأمان عبر فواترك</li>
-            <li className="flex gap-2"><span className="w-5 h-5 bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 rounded-full text-xs font-bold flex items-center justify-center shrink-0">3</span> فريقنا يبنيلك جدول مخصوص ويرسلهولك صورة هنا خلال 24 ساعة من الدفع</li>
+        <div className="bg-white dark:bg-navy-800 rounded-2xl p-5 border border-slate-100 dark:border-navy-700">
+          <h3 className="font-bold text-sm mb-3 flex items-center gap-2"><Sparkles size={16} className="text-brand-500" /> بتشتغل إزاي؟</h3>
+          <ol className="text-sm space-y-2 text-slate-600 dark:text-gray-300">
+            <li className="flex gap-2"><span className="w-5 h-5 bg-brand-100 dark:bg-brand-900/40 text-teal-700 dark:text-brand-300 rounded-full text-xs font-bold flex items-center justify-center shrink-0">1</span> املى الفورم بمواعيدك ومشغولياتك وأولوياتك (دقيقتين بس)</li>
+            <li className="flex gap-2"><span className="w-5 h-5 bg-brand-100 dark:bg-brand-900/40 text-teal-700 dark:text-brand-300 rounded-full text-xs font-bold flex items-center justify-center shrink-0">2</span> ادفع {PLANNER_PRODUCT.priceEgp} ج.م بأمان عبر فواترك</li>
+            <li className="flex gap-2"><span className="w-5 h-5 bg-brand-100 dark:bg-brand-900/40 text-teal-700 dark:text-brand-300 rounded-full text-xs font-bold flex items-center justify-center shrink-0">3</span> فريقنا يبنيلك جدول مخصوص ويرسلهولك صورة هنا خلال 24 ساعة من الدفع</li>
           </ol>
         </div>
 
         {/* My requests */}
         {requests.length > 0 && (
           <div className="space-y-3">
-            <h3 className="font-bold text-sm flex items-center gap-2"><Clock size={16} className="text-teal-500" /> طلباتي</h3>
+            <h3 className="font-bold text-sm flex items-center gap-2"><Clock size={16} className="text-brand-500" /> طلباتي</h3>
             {requests.map((r) => {
               const meta = STATUS_META[r.status] || STATUS_META.awaiting_payment;
               const hs = r.status === "pending" ? hoursSince(r?.payment?.paidAt) : 0;
               return (
-                <div key={r.id} className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 space-y-3">
+                <div key={r.id} className="bg-white dark:bg-navy-800 rounded-2xl p-4 border border-slate-100 dark:border-navy-700 space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <div>
                       <p className="font-bold text-sm">{r?.intake?.fullName || "طلب جدول"}</p>
-                      <p className="text-[11px] text-gray-400 mt-0.5">
+                      <p className="text-[11px] text-slate-400 mt-0.5">
                         {r.createdAt ? new Date(r.createdAt).toLocaleDateString("ar-EG", { day: "numeric", month: "long" }) : ""}
                       </p>
                     </div>
@@ -313,7 +313,7 @@ function PlannerPageInner() {
                   </div>
 
                   {r.status === "pending" && (
-                    <p className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 p-2.5 rounded-xl leading-relaxed">
+                    <p className="text-xs text-accent-700 dark:text-accent-300 bg-accent-50 dark:bg-accent-900/20 border border-accent-100 dark:border-accent-900/30 p-2.5 rounded-xl leading-relaxed">
                       ⏳ الدفع اتأكد وفريقنا شغال على جدولك — <b>هيتم الرد خلال 24 ساعة</b> من الدفع
                       {hs > 0 && <> (عدّى {hs} ساعة{hs >= 24 ? " — لو عدّى أكتر من يوم كلم الدعم 🙏" : ""})</>}
                     </p>
@@ -349,47 +349,47 @@ function PlannerPageInner() {
         {!showForm ? (
           <button
             onClick={() => setShowForm(true)}
-            className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2"
+            className="w-full bg-gradient-to-r from-brand-500 to-navy-700 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2"
           >
             <CalendarDays size={20} /> اطلب جدولك المخصوص — {PLANNER_PRODUCT.priceEgp} ج.م
           </button>
         ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-[24px] p-5 border-2 border-teal-400 space-y-4">
-            <h3 className="font-bold flex items-center gap-2"><CalendarDays size={18} className="text-teal-500" /> فورم طلب جدول جديد</h3>
+          <div className="bg-white dark:bg-navy-800 rounded-[24px] p-5 border-2 border-teal-400 space-y-4">
+            <h3 className="font-bold flex items-center gap-2"><CalendarDays size={18} className="text-brand-500" /> فورم طلب جدول جديد</h3>
 
             <div>
-              <label className="text-xs font-bold text-gray-500">اسمك الكامل *</label>
+              <label className="text-xs font-bold text-slate-500">اسمك الكامل *</label>
               <input
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 maxLength={80}
                 placeholder="مثال: أحمد محمد علي"
-                className="mt-1 w-full p-3 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm outline-none focus:border-teal-400"
+                className="mt-1 w-full p-3 rounded-xl border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 text-sm outline-none focus:border-teal-400"
               />
-              <p className="text-[11px] text-gray-400 mt-1">السنة/الشعبة هتتسجل تلقائيًا من حسابك: {profile?.grade || "—"} {profile?.track ? `• ${profile.track}` : ""}</p>
+              <p className="text-[11px] text-slate-400 mt-1">السنة/الشعبة هتتسجل تلقائيًا من حسابك: {profile?.grade || "—"} {profile?.track ? `• ${profile.track}` : ""}</p>
             </div>
 
             <div>
-              <p className="text-xs font-bold text-gray-500 mb-2">جدول أسبوعك — اكتب في كل يوم: مشغولياتك الثابتة (مدرسة/دروس) وأوقات فراغك اللي تحب تذاكر فيها *</p>
+              <p className="text-xs font-bold text-slate-500 mb-2">جدول أسبوعك — اكتب في كل يوم: مشغولياتك الثابتة (مدرسة/دروس) وأوقات فراغك اللي تحب تذاكر فيها *</p>
               <div className="space-y-2">
                 {DAYS.map((day) => (
-                  <details key={day} className="border dark:border-gray-600 rounded-xl overflow-hidden" open={day === "السبت"}>
-                    <summary className="cursor-pointer p-2.5 text-sm font-bold bg-gray-50 dark:bg-gray-700/50 flex items-center justify-between">
+                  <details key={day} className="border dark:border-navy-600 rounded-xl overflow-hidden" open={day === "السبت"}>
+                    <summary className="cursor-pointer p-2.5 text-sm font-bold bg-slate-50 dark:bg-navy-700/50 flex items-center justify-between">
                       {day}
-                      {((busy[day] || "") + (free[day] || "")).trim() && <Check size={14} className="text-teal-500" />}
+                      {((busy[day] || "") + (free[day] || "")).trim() && <Check size={14} className="text-brand-500" />}
                     </summary>
                     <div className="p-2.5 space-y-2">
                       <input
                         value={busy[day] || ""}
                         onChange={(e) => setBusy((p) => ({ ...p, [day]: e.target.value }))}
                         placeholder="مشغوليات: مثال — المدرسة 8ص-2م، درس فيزياء 4-6م"
-                        className="w-full p-2.5 rounded-lg border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-xs outline-none focus:border-teal-400"
+                        className="w-full p-2.5 rounded-lg border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 text-xs outline-none focus:border-teal-400"
                       />
                       <input
                         value={free[day] || ""}
                         onChange={(e) => setFree((p) => ({ ...p, [day]: e.target.value }))}
                         placeholder="أوقات فاضلة أفضّلها: مثال — 6-10 مساءً"
-                        className="w-full p-2.5 rounded-lg border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-xs outline-none focus:border-teal-400"
+                        className="w-full p-2.5 rounded-lg border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 text-xs outline-none focus:border-teal-400"
                       />
                     </div>
                   </details>
@@ -399,7 +399,7 @@ function PlannerPageInner() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-bold text-gray-500 flex items-center gap-1"><Timer size={12} /> ساعات مذاكرة مستهدفة/يوم *</label>
+                <label className="text-xs font-bold text-slate-500 flex items-center gap-1"><Timer size={12} /> ساعات مذاكرة مستهدفة/يوم *</label>
                 <input
                   type="number"
                   min={0.5}
@@ -407,18 +407,18 @@ function PlannerPageInner() {
                   step={0.5}
                   value={dailyHours}
                   onChange={(e) => setDailyHours(e.target.value)}
-                  className="mt-1 w-full p-3 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm outline-none focus:border-teal-400"
+                  className="mt-1 w-full p-3 rounded-xl border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 text-sm outline-none focus:border-teal-400"
                 />
               </div>
-              <label className="flex items-center gap-2 p-3 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 mt-5 cursor-pointer">
-                <input type="checkbox" checked={pomodoro} onChange={(e) => setPomodoro(e.target.checked)} className="accent-teal-500 w-4 h-4" />
+              <label className="flex items-center gap-2 p-3 rounded-xl border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 mt-5 cursor-pointer">
+                <input type="checkbox" checked={pomodoro} onChange={(e) => setPomodoro(e.target.checked)} className="accent-brand-500 w-4 h-4" />
                 <span className="text-xs font-bold">نظام بومودورو 🍅 (25 تركيز + 5 راحة)</span>
               </label>
             </div>
 
             {gradeSubjects.length > 0 && (
               <div>
-                <p className="text-xs font-bold text-gray-500 mb-2">المواد اللي محتاجة أولوية (اختار اللي ينطبق):</p>
+                <p className="text-xs font-bold text-slate-500 mb-2">المواد اللي محتاجة أولوية (اختار اللي ينطبق):</p>
                 <div className="flex flex-wrap gap-2">
                   {gradeSubjects.map((s) => (
                     <button
@@ -427,8 +427,8 @@ function PlannerPageInner() {
                       onClick={() => toggleSubject(s)}
                       className={`text-xs font-bold px-3 py-1.5 rounded-full border transition ${
                         prioritySubjects.includes(s)
-                          ? "bg-teal-500 border-teal-500 text-white"
-                          : "bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-600 dark:text-gray-300"
+                          ? "bg-brand-500 border-brand-500 text-white"
+                          : "bg-slate-50 dark:bg-navy-700 dark:border-navy-600 text-slate-600 dark:text-gray-300"
                       }`}
                     >
                       {s}
@@ -439,23 +439,23 @@ function PlannerPageInner() {
             )}
 
             <div>
-              <label className="text-xs font-bold text-gray-500">امتحانات/تسليمات قريبة؟ (اختياري)</label>
+              <label className="text-xs font-bold text-slate-500">امتحانات/تسليمات قريبة؟ (اختياري)</label>
               <input
                 value={upcomingExams}
                 onChange={(e) => setUpcomingExams(e.target.value)}
                 placeholder="مثال: امتحان فيزياء يوم الخميس الجاي"
-                className="mt-1 w-full p-3 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm outline-none focus:border-teal-400"
+                className="mt-1 w-full p-3 rounded-xl border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 text-sm outline-none focus:border-teal-400"
               />
             </div>
 
             <div>
-              <label className="text-xs font-bold text-gray-500">ملاحظات حرة (اختياري)</label>
+              <label className="text-xs font-bold text-slate-500">ملاحظات حرة (اختياري)</label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={2}
                 placeholder="أي حاجة تانية تحب نعرفها عشان الجدول يطلع مظبوط ليك..."
-                className="mt-1 w-full p-3 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm outline-none focus:border-teal-400 resize-none"
+                className="mt-1 w-full p-3 rounded-xl border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 text-sm outline-none focus:border-teal-400 resize-none"
               />
             </div>
 
@@ -464,22 +464,22 @@ function PlannerPageInner() {
             <button
               onClick={handleSubmit}
               disabled={paying || activePending}
-              className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2"
+              className="w-full bg-gradient-to-r from-brand-500 to-navy-700 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2"
               title={activePending ? "عندك طلب قيد التنفيذ حاليًا — استنى تسليمه الأول" : ""}
             >
               {paying ? <Loader2 size={18} className="animate-spin" /> : <CreditCard size={18} />}
               {paying ? "بنجهز لينك الدفع..." : `احفظ وادفع — ${PLANNER_PRODUCT.priceEgp} ج.م`}
             </button>
             {activePending && (
-              <p className="text-[11px] text-center text-amber-600">عندك طلب قيد التنفيذ دلوقتي — تقدر تطلب جدول جديد بعد تسليمه ✋</p>
+              <p className="text-[11px] text-center text-accent-600">عندك طلب قيد التنفيذ دلوقتي — تقدر تطلب جدول جديد بعد تسليمه ✋</p>
             )}
-            <button onClick={() => setShowForm(false)} className="w-full text-xs text-gray-400 flex items-center justify-center gap-1">
+            <button onClick={() => setShowForm(false)} className="w-full text-xs text-slate-400 flex items-center justify-center gap-1">
               <ChevronDown size={14} className="rotate-180" /> إخفاء الفورم
             </button>
           </div>
         )}
 
-        <p className="text-xs text-gray-400 text-center flex items-center justify-center gap-1">
+        <p className="text-xs text-slate-400 text-center flex items-center justify-center gap-1">
           <Sparkles size={14} /> الدفع آمن عبر فواترك • جدولك بيتعمل يدويًا بعناية لكل طالب
         </p>
       </div>
