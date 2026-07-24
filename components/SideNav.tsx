@@ -103,10 +103,10 @@ export default function SideNav() {
           م
         </div>
         <div>
-          <p className="font-black text-lg leading-none bg-brand-gradient bg-clip-text text-transparent">
+          <p className="font-black text-lg leading-none text-brand-600 dark:text-white">
             مِعافر
           </p>
-          <p className="text-[11px] text-slate-400 mt-1">Meafer.ai • المنصة الذكية</p>
+          <p className="text-[11px] text-slate-400 mt-1" dir="ltr">M3afer • المنصة الذكية</p>
         </div>
       </Link>
 

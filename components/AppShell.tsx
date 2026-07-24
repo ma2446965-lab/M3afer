@@ -32,9 +32,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <div className="w-8 h-8 rounded-xl bg-brand-gradient text-white flex items-center justify-center font-black text-sm shadow-md shadow-brand-700/25 group-hover:scale-105 transition-transform">
               م
             </div>
-            <span className="font-black text-base bg-brand-gradient bg-clip-text text-transparent">
-              مِعافر
-            </span>
+            <div className="leading-none text-start">
+              <p className="font-black text-sm text-brand-600 dark:text-white">
+                مِعافر
+              </p>
+              <p className="mt-0.5 text-[10px] font-bold tracking-wide text-slate-500 dark:text-slate-300" dir="ltr">
+                M3afer
+              </p>
+            </div>
           </Link>
           <HamburgerMenu />
         </header>

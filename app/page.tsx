@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { getSubjectsForGradeTrack } from "@/lib/subjects";
@@ -19,7 +19,7 @@ const REVIEWS = [
 
 function StarRating({ rating }: { rating: number }) {
   return (
-    <div className="flex gap-0.5">
+    <div className="flex shrink-0 gap-0.5" dir="ltr">
       {[1, 2, 3, 4, 5].map((i) => (
         <Star key={i} size={14} className={i <= rating ? "fill-accent-400 text-accent-400" : "text-slate-300 dark:text-navy-700"} />
       ))}
@@ -32,7 +32,6 @@ export default function HomePage() {
   const router = useRouter();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [reviewIdx, setReviewIdx] = useState(0);
-  const reviewsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!loading) {
@@ -231,17 +230,17 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div ref={reviewsRef} className="overflow-hidden">
-            <div className="flex gap-3 transition-transform duration-500" style={{ transform: `translateX(${reviewIdx * 100}%)` }}>
+          <div className="overflow-hidden" dir="ltr">
+            <div className="flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${reviewIdx * 100}%)` }}>
               {REVIEWS.map((review, idx) => (
-                <div key={idx} className="w-full shrink-0">
+                <div key={idx} className="w-full shrink-0" dir="rtl">
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-full bg-brand-gradient flex items-center justify-center text-white font-bold text-sm shrink-0">
                       {review.name[0]}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <p className="font-bold text-sm">{review.name}</p>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-bold text-sm truncate">{review.name}</p>
                         <StarRating rating={review.rating} />
                       </div>
                       <p className="text-[11px] text-slate-500 mt-0.5">{review.grade}</p>
