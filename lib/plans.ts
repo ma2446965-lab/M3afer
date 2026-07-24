@@ -2,52 +2,79 @@
 // (client), the checkout API (server), and the webhook (server).
 // IMPORTANT: NO secrets in this file — it is imported by client components.
 
-export type PlanId = "monthly" | "yearly";
+export type PlanId = "starter" | "commitment" | "vip";
 
 export interface Plan {
   id: PlanId;
-  nameAr: string; // shown on the card + sent to Fatorak as the cart item name
-  priceEgp: number; // cartTotal sent to Fatorak
-  durationDays: number; // subscription extension applied by the webhook
-  periodAr: string; // copy shown next to the price ("30 يوم" / "12 شهر")
+  nameAr: string;
+  nameShort: string;
+  priceEgp: number;
+  durationDays: number;
+  periodAr: string;
+  features: string[];
+  popular?: boolean;
 }
 
 export const DAY_MS = 24 * 60 * 60 * 1000;
 
 export const PLANS: Record<PlanId, Plan> = {
-  monthly: {
-    id: "monthly",
-    nameAr: "اشتراك مِعافر الشهري",
+  starter: {
+    id: "starter",
+    nameAr: "انطلاقة",
+    nameShort: "انطلاقة",
+    priceEgp: 99,
+    durationDays: 30,
+    periodAr: "30 يوم",
+    features: [
+      "كل أدوات المذاكرة والملخصات والكويزات",
+      "مساعدا الذكاء الاصطناعي (بشمهندس محمد ود. بسملة)",
+      "فتح كل مميزات المنصة طول فترة الاشتراك",
+    ],
+  },
+  commitment: {
+    id: "commitment",
+    nameAr: "التزام",
+    nameShort: "التزام",
     priceEgp: 150,
     durationDays: 30,
-    periodAr: "30 يوم"
+    periodAr: "30 يوم",
+    popular: true,
+    features: [
+      "كل مميزات خطة انطلاقة",
+      "حجز حصص لايف بمواعيد مرنة",
+      "أولوية في الرد على الأسئلة",
+      "تقارير تقدم أسبوعية",
+    ],
   },
-  yearly: {
-    id: "yearly",
-    nameAr: "اشتراك مِعافر السنوي",
-    priceEgp: 1500,
-    durationDays: 365,
-    periodAr: "12 شهر"
-  }
+  vip: {
+    id: "vip",
+    nameAr: "VIP",
+    nameShort: "VIP",
+    priceEgp: 250,
+    durationDays: 30,
+    periodAr: "30 يوم",
+    features: [
+      "كل مميزات خطة التزام",
+      "جدول مذاكرة مخصوص (خدمة جدولي)",
+      "متابعة شخصية من المدرسين",
+      "دعم فني على مدار الساعة",
+      "خصم 20% على كل الكورسات والمحاضرات",
+    ],
+  },
 };
 
-/** Render/order helper for the pricing page (monthly first). */
-export const PLAN_LIST: Plan[] = [PLANS.monthly, PLANS.yearly];
+/** Render/order helper for the pricing page. */
+export const PLAN_LIST: Plan[] = [PLANS.starter, PLANS.commitment, PLANS.vip];
 
-/** Back-compat default: anything unresolvable maps to the shortest plan. */
-export const DEFAULT_PLAN: PlanId = "monthly";
+/** Back-compat default: anything unresolvable maps to starter. */
+export const DEFAULT_PLAN: PlanId = "starter";
 
 export function isPlanId(v: unknown): v is PlanId {
   return typeof v === "string" && v in PLANS;
 }
 
 /**
- * Resolve which plan a payment refers to. Accepts:
- *  - "monthly" | "yearly"                       (current payLoad format)
- *  - legacy ids written by the old checkout     ("monthly-150", "yearly-1500")
- *  - the webhook's pay_load as object OR as a JSON-encoded string
- * Anything unrecognized falls back to `monthly` (the safest, shortest
- * extension) which matches the old webhook behavior for old invoices.
+ * Resolve which plan a payment refers to.
  */
 export function planFromPayLoad(raw: unknown): PlanId {
   if (raw && typeof raw === "object") {
@@ -70,10 +97,10 @@ export function planFromPayLoad(raw: unknown): PlanId {
 
 function legacyMap(s: string): PlanId {
   const t = s.toLowerCase();
-  // Only an explicit yearly marker upgrades to yearly; anything uncertain
-  // stays monthly (shortest extension — the safe side to err on).
-  if (t.includes("yearly") || t.includes("1500") || t.includes("سنوي")) return "yearly";
-  return DEFAULT_PLAN; // "monthly", "monthly-150", "", junk → monthly
+  if (t.includes("vip") || t.includes("250")) return "vip";
+  if (t.includes("commitment") || t.includes("التزام") || t.includes("150")) return "commitment";
+  if (t.includes("yearly") || t.includes("1500") || t.includes("سنوي")) return "commitment";
+  return DEFAULT_PLAN;
 }
 
 /** The Firebase uid travels inside payLoad too — extract it defensively. */
@@ -94,10 +121,7 @@ export function uidFromPayLoad(raw: unknown): string | undefined {
 }
 
 /**
- * Subscription end-date math used by the webhook:
- *  - subscriber still active → extend FROM the current end date (stacked)
- *  - expired / never subscribed → fresh period starting now
- * Returns the new end timestamp (ms) and whether this was a stacked renewal.
+ * Subscription end-date math used by the webhook.
  */
 export function computeNewSubscriptionEnd(
   currentEndIso: string | null | undefined,
@@ -116,32 +140,21 @@ export function computeNewSubscriptionEnd(
 }
 
 // ---------------------------------------------------------------------------
-// One-time products (flat fee, NOT subscriptions — no subscriptionEndDate is
-// touched when these are paid). First product: "جدولي" hand-built study
-// planner: student submits an intake form, pays 50 EGP once, admin uploads a
-// personalized schedule image back within 24h.
+// One-time products
 // ---------------------------------------------------------------------------
 export const PLANNER_PRODUCT = {
   kind: "planner50",
-  nameAr: "جدول مذاكرة مخصوص — خدمة «جدولي 📅»",
+  nameAr: "جدول مذاكرة مخصوص — خدمة «جدولي»",
   priceEgp: 50
 } as const;
 
-// Recorded-video lectures marketplace — per-lecture purchases plus a
-// whole-subject bundle at a discount. Prices come from each lecture doc
-// (server-read at checkout; nothing client-side is ever trusted).
 export const LECTURE_PRODUCT = { kind: "lecture" } as const;
 export const LECTURE_BUNDLE = {
   kind: "lecture-bundle",
-  /** 20% off the sum of the subject's paid lectures */
   discountPct: 0.2
 } as const;
-// Whole-COURSE bundle ("buy the course, get all its lectures granted").
-// Price is server-recomputed from member lectures × course.discountPct —
-// see lib/courses.ts computeCourseQuote. Grants fan out per-lecture.
 export const COURSE_PRODUCT = { kind: "course" } as const;
 
-/** pay_load discrimination: legacy subscription invoices carry NO `kind`. */
 export type PayLoadKind =
   | "plan"
   | typeof PLANNER_PRODUCT.kind
@@ -161,7 +174,6 @@ function fieldOf(raw: unknown, key: string): unknown {
   return undefined;
 }
 
-/** Generic, shape-tolerant pay_load field reader (object or JSON string). */
 export function payLoadField(raw: unknown, key: string): unknown {
   return fieldOf(raw, key);
 }
@@ -171,7 +183,6 @@ function strField(raw: unknown, key: string): string | undefined {
   return typeof v === "string" && v ? v : undefined;
 }
 
-/** What does this pay_load pay FOR? ("plan" = subscription, else a product) */
 export function payLoadKind(raw: unknown): PayLoadKind {
   const k = fieldOf(raw, "kind");
   if (k === PLANNER_PRODUCT.kind) return PLANNER_PRODUCT.kind;
@@ -181,22 +192,18 @@ export function payLoadKind(raw: unknown): PayLoadKind {
   return "plan";
 }
 
-/** scheduleRequests doc id travels in payLoad for the planner product. */
 export function requestIdFromPayLoad(raw: unknown): string | undefined {
   return strField(raw, "requestId");
 }
 
-/** lecture id travels in payLoad for single-lecture purchases. */
 export function lectureIdFromPayLoad(raw: unknown): string | undefined {
   return strField(raw, "lectureId");
 }
 
-/** subject id travels in payLoad for whole-subject bundle purchases. */
 export function subjectIdFromPayLoad(raw: unknown): string | undefined {
   return strField(raw, "subjectId");
 }
 
-/** course id travels in payLoad for whole-course purchases. */
 export function courseIdFromPayLoad(raw: unknown): string | undefined {
   return strField(raw, "courseId");
 }

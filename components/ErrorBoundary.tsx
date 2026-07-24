@@ -40,13 +40,13 @@ export default class ErrorBoundary extends React.Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-[70vh] flex items-center justify-center p-4 bg-[#f8fafc] dark:bg-gray-900">
-          <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl border dark:border-gray-700 p-6 text-center shadow-lg">
+        <div className="min-h-[70vh] flex items-center justify-center p-4 bg-slate-50 dark:bg-navy-900">
+          <div className="max-w-md w-full bg-white dark:bg-navy-800 rounded-2xl border dark:border-navy-700 p-6 text-center shadow-lg">
             <AlertTriangle className="mx-auto text-red-500" size={42} />
             <h1 className="font-bold text-lg mt-3">
               حصل خطأ غير متوقع في {this.props.label || "الصفحة"} 😅
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               لو المشكلة اتكررت، ابعت نص الخطأ ده للدعم الفني:
             </p>
             <p
@@ -58,20 +58,20 @@ export default class ErrorBoundary extends React.Component<Props, State> {
             <div className="flex gap-2 mt-5">
               <button
                 onClick={this.handleRetry}
-                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm"
+                className="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm"
               >
                 <RefreshCw size={15} /> حاول تاني
               </button>
               <button
                 onClick={() => window.location.reload()}
-                className="flex-1 bg-gray-100 dark:bg-gray-700 font-bold py-2.5 rounded-xl text-sm"
+                className="flex-1 bg-slate-100 dark:bg-navy-700 font-bold py-2.5 rounded-xl text-sm"
               >
                 تحديث الصفحة
               </button>
               <Link
                 href="/"
                 title="الرئيسية"
-                className="p-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center"
+                className="p-2.5 bg-slate-100 dark:bg-navy-700 rounded-xl flex items-center"
               >
                 <Home size={18} />
               </Link>

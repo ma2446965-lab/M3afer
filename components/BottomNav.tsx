@@ -2,30 +2,24 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Library, BrainCircuit, User, CalendarPlus } from "lucide-react";
-import { useTheme } from "@/context/ThemeContext";
 
 const navItems = [
-  { href: "/", icon: Home, labelAr: "الرئيسية", labelEn: "Home" },
-  { href: "/library", icon: Library, labelAr: "المكتبة", labelEn: "Library" },
-  { href: "/booking", icon: CalendarPlus, labelAr: "احجز", labelEn: "Book" },
-  { href: "/quizzes", icon: BrainCircuit, labelAr: "الكويزات", labelEn: "Quizzes" },
-  { href: "/profile", icon: User, labelAr: "حسابي", labelEn: "Profile" },
+  { href: "/", icon: Home, labelAr: "الرئيسية" },
+  { href: "/library", icon: Library, labelAr: "المكتبة" },
+  { href: "/booking", icon: CalendarPlus, labelAr: "احجز" },
+  { href: "/quizzes", icon: BrainCircuit, labelAr: "الكويزات" },
+  { href: "/profile", icon: User, labelAr: "حسابي" },
 ];
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const { language } = useTheme();
 
   // Hide on auth pages
   if (pathname.startsWith("/auth") || pathname.startsWith("/onboarding")) return null;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
-      {/* mb uses the iOS safe-area when larger than 0.75rem so the pill never
-          sits under the home indicator / gets clipped at the screen edge.
-          Items: px-4 (not px-5) + NO scale on the active item (scale-105 used
-          to paint the active circle over its neighbours at ≤390px). */}
-      <div className="mx-3 mb-[max(0.75rem,env(safe-area-inset-bottom,0px))] bg-white/90 dark:bg-gray-800/90 glass rounded-[28px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-white/20 dark:border-gray-700/50 px-2 py-2 flex justify-between items-center backdrop-blur-xl">
+      <div className="mx-3 mb-[max(0.75rem,env(safe-area-inset-bottom,0px))] bg-white/90 dark:bg-navy-800/90 glass rounded-[28px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-white/20 dark:border-navy-700/50 px-2 py-2 flex justify-between items-center backdrop-blur-xl">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -34,13 +28,13 @@ export default function BottomNav() {
               href={item.href}
               className={`flex flex-col items-center justify-center px-4 py-2.5 rounded-full transition-all duration-300 ${
                 isActive
-                  ? "bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-lg shadow-sky-500/25"
-                  : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                  ? "bg-brand-gradient text-white shadow-lg shadow-brand-700/25"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
               }`}
             >
               <item.icon size={20} className={`${isActive ? "mb-0.5" : "mb-1"}`} />
               <span className={`text-[11px] font-semibold whitespace-nowrap ${isActive ? "block" : "hidden sm:block"}`}>
-                {language === "ar" ? item.labelAr : item.labelEn}
+                {item.labelAr}
               </span>
             </Link>
           );

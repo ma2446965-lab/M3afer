@@ -1,17 +1,23 @@
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Typography ─── */
 * {
-  font-family: 'Cairo', 'IBM Plex Sans Arabic', sans-serif;
+  font-family: 'Cairo', sans-serif;
 }
 
+/* ─── Base ─── */
 body {
-  @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300;
+  @apply bg-slate-50 dark:bg-navy-900 text-navy-900 dark:text-slate-100 transition-colors duration-300;
 }
 
+/* ─── Font scale (Cairo only) ─── */
+/*  xs: 12px   sm: 14px   base: 16px   lg: 18px   xl: 20px   2xl: 24px   3xl: 30px  */
+
+/* ─── Scrollbar helpers ─── */
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -20,15 +26,15 @@ body {
   display: none;
 }
 
-/* Custom animations */
+/* ─── Custom animations ─── */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
+  50% { transform: translateY(-6px); }
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(14, 165, 233, 0.4); }
-  50% { box-shadow: 0 0 30px rgba(14, 165, 233, 0.7); }
+  0%, 100% { box-shadow: 0 0 16px rgba(26, 107, 150, 0.35); }
+  50% { box-shadow: 0 0 24px rgba(26, 107, 150, 0.6); }
 }
 
 .animate-float {
@@ -38,4 +44,23 @@ body {
 .glass {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+}
+
+/* ─── Brand gradient utility ─── */
+.bg-brand-gradient {
+  background: linear-gradient(135deg, #0c3b54 0%, #1a6b96 50%, #2d4a75 100%);
+}
+
+.bg-brand-gradient-light {
+  background: linear-gradient(135deg, #145374 0%, #1a6b96 100%);
+}
+
+/* ─── Card unified styling ─── */
+@layer components {
+  .card {
+    @apply bg-white dark:bg-navy-800 rounded-2xl border border-slate-200 dark:border-navy-700 shadow-sm;
+  }
+  .card-accent {
+    @apply bg-accent-50 dark:bg-accent-900/20 border-accent-200 dark:border-accent-800;
+  }
 }

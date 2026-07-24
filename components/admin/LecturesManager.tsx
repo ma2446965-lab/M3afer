@@ -226,59 +226,59 @@ export default function LecturesManager() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="font-bold flex items-center gap-2"><Clapperboard size={18} className="text-indigo-500" /> إدارة المحاضرات</h2>
+        <h2 className="font-bold flex items-center gap-2"><Clapperboard size={18} className="text-brand-500" /> إدارة المحاضرات</h2>
         <div className="flex gap-2">
-          <button onClick={() => setTick((t) => t + 1)} className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700" title="تحديث"><RefreshCw size={14} /></button>
-          <button onClick={() => setShowForm(!showForm)} className="bg-indigo-600 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5">
+          <button onClick={() => setTick((t) => t + 1)} className="p-2 rounded-lg bg-slate-100 dark:bg-navy-700" title="تحديث"><RefreshCw size={14} /></button>
+          <button onClick={() => setShowForm(!showForm)} className="bg-brand-600 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5">
             {showForm ? <X size={14} /> : <PlusCircle size={14} />} {showForm ? "إلغاء" : "محاضرة جديدة"}
           </button>
         </div>
       </div>
 
       {showForm && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-indigo-400 p-4 space-y-3">
+        <div className="bg-white dark:bg-navy-800 rounded-2xl border-2 border-indigo-400 p-4 space-y-3">
           <h3 className="font-bold text-sm">محاضرة جديدة 🎬</h3>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="عنوان المحاضرة *" className="w-full p-2.5 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm" />
+          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="عنوان المحاضرة *" className="w-full p-2.5 rounded-xl border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 text-sm" />
           <div className="grid grid-cols-2 gap-2">
-            <select value={subjectId} onChange={(e) => pickSubject(e.target.value)} className="p-2.5 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm">
+            <select value={subjectId} onChange={(e) => pickSubject(e.target.value)} className="p-2.5 rounded-xl border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 text-sm">
               <option value="">المادة... *</option>
               {subjects.map((s) => (
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
             </select>
-            <input value={teacherName} onChange={(e) => setTeacherName(e.target.value)} placeholder="اسم المدرّس" className="p-2.5 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm" />
+            <input value={teacherName} onChange={(e) => setTeacherName(e.target.value)} placeholder="اسم المدرّس" className="p-2.5 rounded-xl border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 text-sm" />
           </div>
-          <select value={formCourseId} onChange={(e) => setFormCourseId(e.target.value)} className="w-full p-2.5 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm">
+          <select value={formCourseId} onChange={(e) => setFormCourseId(e.target.value)} className="w-full p-2.5 rounded-xl border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 text-sm">
             <option value="">بدون كورس (محاضرة مستقلة)</option>
             {courses.map((c) => (
               <option key={c.id} value={c.id}>📦 {c.title}{subjectId && c.subjectId !== subjectId ? " ⚠️ مادة مختلفة" : ""}</option>
             ))}
           </select>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="وصف قصير (يظهر تحت الفيديو)" className="w-full p-2.5 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm resize-none" />
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="وصف قصير (يظهر تحت الفيديو)" className="w-full p-2.5 rounded-xl border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 text-sm resize-none" />
           <div className="grid grid-cols-3 gap-2">
-            <input value={durationMin} onChange={(e) => setDurationMin(e.target.value)} type="number" min={1} placeholder="المدة (دقيقة)" className="p-2.5 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm" />
-            <input value={priceEgp} onChange={(e) => setPriceEgp(e.target.value)} type="number" min={0} placeholder="السعر ج.م (0=مجاني)" className="p-2.5 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm" />
-            <label className="flex items-center gap-1.5 text-xs font-bold p-2.5 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 cursor-pointer">
+            <input value={durationMin} onChange={(e) => setDurationMin(e.target.value)} type="number" min={1} placeholder="المدة (دقيقة)" className="p-2.5 rounded-xl border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 text-sm" />
+            <input value={priceEgp} onChange={(e) => setPriceEgp(e.target.value)} type="number" min={0} placeholder="السعر ج.م (0=مجاني)" className="p-2.5 rounded-xl border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 text-sm" />
+            <label className="flex items-center gap-1.5 text-xs font-bold p-2.5 rounded-xl border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 cursor-pointer">
               <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} className="accent-indigo-500" /> منشورة
             </label>
           </div>
-          <label className="flex items-center gap-2 text-xs font-bold text-emerald-600 cursor-pointer">
-            <input type="checkbox" checked={isPreview} onChange={(e) => setIsPreview(e.target.checked)} className="accent-emerald-500" />
+          <label className="flex items-center gap-2 text-xs font-bold text-brand-600 cursor-pointer">
+            <input type="checkbox" checked={isPreview} onChange={(e) => setIsPreview(e.target.checked)} className="accent-brand-500" />
             <Gift size={14} /> معاينة مجانية (الكل يشوفها ببلاش — طُعم بيع مثالي)
           </label>
-          <input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="لينك يوتيوب (Unlisted) — watch?v= أو youtu.be" className="w-full p-2.5 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm font-mono" dir="ltr" />
+          <input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="لينك يوتيوب (Unlisted) — watch?v= أو youtu.be" className="w-full p-2.5 rounded-xl border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 text-sm font-mono" dir="ltr" />
           <div className="grid grid-cols-2 gap-2">
-            <label className="text-xs p-2.5 rounded-xl border-2 border-dashed dark:border-gray-600 text-gray-500 flex items-center gap-2 cursor-pointer">
+            <label className="text-xs p-2.5 rounded-xl border-2 border-dashed dark:border-navy-600 text-slate-500 flex items-center gap-2 cursor-pointer">
               <UploadCloud size={14} /> {thumbFile ? thumbFile.name : "صورة الغلاف (اختياري)"}
               <input type="file" accept="image/*" className="hidden" onChange={(e) => setThumbFile(e.target.files?.[0] || null)} />
             </label>
-            <label className="text-xs p-2.5 rounded-xl border-2 border-dashed dark:border-gray-600 text-gray-500 flex items-center gap-2 cursor-pointer">
+            <label className="text-xs p-2.5 rounded-xl border-2 border-dashed dark:border-navy-600 text-slate-500 flex items-center gap-2 cursor-pointer">
               <UploadCloud size={14} /> {pdfFile ? pdfFile.name : "ملاحظات PDF (اختياري)"}
               <input type="file" accept="application/pdf,image/*" className="hidden" onChange={(e) => setPdfFile(e.target.files?.[0] || null)} />
             </label>
           </div>
           {formErr && <p className="text-xs text-red-500 flex items-center gap-1"><AlertTriangle size={12} /> {formErr}</p>}
-          <button onClick={createLecture} disabled={saving} className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 text-sm">
+          <button onClick={createLecture} disabled={saving} className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 text-sm">
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} {saving ? "بيترفع..." : "حفظ المحاضرة"}
           </button>
         </div>
@@ -286,9 +286,9 @@ export default function LecturesManager() {
 
       {err && <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-xl">{err}</p>}
       {loading ? (
-        <div className="p-10 flex justify-center"><Loader2 className="animate-spin text-indigo-500" /></div>
+        <div className="p-10 flex justify-center"><Loader2 className="animate-spin text-brand-500" /></div>
       ) : lectures.length === 0 ? (
-        <p className="text-sm text-gray-400 text-center p-8 bg-white dark:bg-gray-800 rounded-2xl border dark:border-gray-700">
+        <p className="text-sm text-slate-400 text-center p-8 bg-white dark:bg-navy-800 rounded-2xl border dark:border-navy-700">
           <Clapperboard className="mx-auto mb-2 opacity-50" /> لسه مفيش محاضرات — ضيف أول واحدة من الزرار فوق
         </p>
       ) : (
@@ -296,50 +296,50 @@ export default function LecturesManager() {
           {lectures.map((l) => {
             const st = stats[l.id];
             return (
-            <div key={l.id} className="bg-white dark:bg-gray-800 rounded-2xl border dark:border-gray-700 p-3.5 space-y-2">
+            <div key={l.id} className="bg-white dark:bg-navy-800 rounded-2xl border dark:border-navy-700 p-3.5 space-y-2">
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="font-bold text-sm flex-1 min-w-[140px]">{l.title}</p>
-                <span className="text-[10px] bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 px-2 py-0.5 rounded-full">{l.subjectName}</span>
+                <span className="text-[10px] bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-300 px-2 py-0.5 rounded-full">{l.subjectName}</span>
                 {l.courseId ? (
-                  <span className="text-[10px] bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-300 px-2 py-0.5 rounded-full font-bold">
+                  <span className="text-[10px] bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-300 px-2 py-0.5 rounded-full font-bold">
                     📦 {courses.find((c) => c.id === l.courseId)?.title || "كورس"}
                   </span>
                 ) : (
-                  <span className="text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full font-bold">بدون كورس</span>
+                  <span className="text-[10px] bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300 px-2 py-0.5 rounded-full font-bold">بدون كورس</span>
                 )}
-                {l.isFreePreview && <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full flex items-center gap-1"><Gift size={10} /> معاينة</span>}
-                <label className="text-[11px] flex items-center gap-1 font-bold text-gray-500 cursor-pointer">
+                {l.isFreePreview && <span className="text-[10px] bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full flex items-center gap-1"><Gift size={10} /> معاينة</span>}
+                <label className="text-[11px] flex items-center gap-1 font-bold text-slate-500 cursor-pointer">
                   <input type="checkbox" checked={l.published !== false} onChange={(e) => patch(l.id, { published: e.target.checked })} className="accent-indigo-500" /> منشورة
                 </label>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
                 <div className="flex items-center gap-1 text-xs">
-                  <span className="text-gray-400">السعر:</span>
+                  <span className="text-slate-400">السعر:</span>
                   <input
                     key={`p-${l.id}-${l.priceEgp}`}
                     defaultValue={l.priceEgp}
                     type="number"
                     min={0}
-                    className="w-20 p-1.5 rounded-lg border dark:border-gray-600 bg-gray-50 dark:bg-gray-700"
+                    className="w-20 p-1.5 rounded-lg border dark:border-navy-600 bg-slate-50 dark:bg-navy-700"
                     onBlur={(e) => {
                       const v = Number(e.target.value);
                       if (Number.isFinite(v) && v >= 0 && v !== l.priceEgp) patch(l.id, { priceEgp: v });
                     }}
                   />
-                  <span className="text-gray-400">ج.م</span>
+                  <span className="text-slate-400">ج.م</span>
                 </div>
                 <select
                   value={l.courseId || ""}
                   onChange={(e) => reassignCourse(l, e.target.value)}
                   title="الكورس التابعة له المحاضرة"
-                  className="text-[11px] p-1.5 rounded-lg border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 max-w-[150px]"
+                  className="text-[11px] p-1.5 rounded-lg border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 max-w-[150px]"
                 >
                   <option value="">بدون كورس</option>
                   {courses.map((c) => (
                     <option key={c.id} value={c.id}>📦 {c.title}</option>
                   ))}
                 </select>
-                <button onClick={() => loadStats(l.id)} className="text-[11px] bg-gray-100 dark:bg-gray-700 px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-1 text-gray-600 dark:text-gray-300">
+                <button onClick={() => loadStats(l.id)} className="text-[11px] bg-slate-100 dark:bg-navy-700 px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-1 text-slate-600 dark:text-gray-300">
                   <BarChart3 size={12} />
                   {st === "loading"
                     ? "..."

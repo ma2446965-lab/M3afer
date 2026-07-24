@@ -6,8 +6,8 @@ import { Subject, LessonSlot, SlotInput, EMPTY_SLOT, formatSlotDate } from "@/li
 import { Plus, Pencil, Trash2, X, Loader2, CalendarDays } from "lucide-react";
 
 const inputCls =
-  "w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500";
-const labelCls = "text-xs font-bold text-gray-500 dark:text-gray-400 mb-1 block";
+  "w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-700 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500";
+const labelCls = "text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 block";
 
 export default function SlotsManager() {
   const [slots, setSlots] = useState<LessonSlot[]>([]);
@@ -123,11 +123,11 @@ export default function SlotsManager() {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border dark:border-gray-700 overflow-hidden">
-      <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b dark:border-gray-700">
+    <div className="bg-white dark:bg-navy-800 rounded-2xl border dark:border-navy-700 overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b dark:border-navy-700">
         <h2 className="font-bold flex items-center gap-2">
           <CalendarDays size={18} /> المواعيد المتاحة
-          <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 px-2 py-0.5 rounded-full">
+          <span className="text-xs bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-gray-300 px-2 py-0.5 rounded-full">
             {filteredSlots.length}
           </span>
         </h2>
@@ -135,7 +135,7 @@ export default function SlotsManager() {
           <select
             value={filterSubject}
             onChange={(e) => setFilterSubject(e.target.value)}
-            className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm"
+            className="px-3 py-2 rounded-xl border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-700 text-sm"
           >
             <option value="">كل المواد</option>
             {subjects.map((s) => (
@@ -146,7 +146,7 @@ export default function SlotsManager() {
           </select>
           <button
             onClick={openAdd}
-            className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-4 py-2 rounded-xl"
+            className="flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold px-4 py-2 rounded-xl"
           >
             <Plus size={16} /> إضافة ميعاد
           </button>
@@ -155,12 +155,12 @@ export default function SlotsManager() {
 
       {listLoading ? (
         <div className="p-10 flex justify-center">
-          <Loader2 className="animate-spin text-gray-400" />
+          <Loader2 className="animate-spin text-slate-400" />
         </div>
       ) : listError ? (
         <p className="p-6 text-sm text-red-500">{listError}</p>
       ) : filteredSlots.length === 0 ? (
-        <p className="p-8 text-center text-sm text-gray-400">
+        <p className="p-8 text-center text-sm text-slate-400">
           {slots.length === 0
             ? "مفيش مواعيد لسه — ضيف مادة الأول (لو مفيش) وبعدين دوس \"إضافة ميعاد\" 📅"
             : "مفيش مواعيد للمادة دي"}
@@ -169,7 +169,7 @@ export default function SlotsManager() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[720px]">
             <thead>
-              <tr className="text-xs text-gray-400 border-b dark:border-gray-700 text-right">
+              <tr className="text-xs text-slate-400 border-b dark:border-navy-700 text-right">
                 <th className="p-3 font-medium">المادة</th>
                 <th className="p-3 font-medium">التاريخ</th>
                 <th className="p-3 font-medium">الوقت</th>
@@ -185,12 +185,12 @@ export default function SlotsManager() {
                 const bookedCount = Number(s.bookedCount) || 0;
                 const remaining = capacity - bookedCount;
                 return (
-                  <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                  <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-gray-700/30">
                     <td className="p-3 font-bold">{subjectName(s.subjectId)}</td>
-                    <td className="p-3 text-gray-600 dark:text-gray-300 whitespace-nowrap">
+                    <td className="p-3 text-slate-600 dark:text-gray-300 whitespace-nowrap">
                       {formatSlotDate(s.date)}
                     </td>
-                    <td className="p-3 text-gray-600 dark:text-gray-300" dir="ltr">
+                    <td className="p-3 text-slate-600 dark:text-gray-300" dir="ltr">
                       {s.time || "—"}
                     </td>
                     <td className="p-3">{capacity}</td>
@@ -201,7 +201,7 @@ export default function SlotsManager() {
                           remaining <= 0
                             ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
                             : remaining <= Math.max(1, Math.floor(capacity * 0.25))
-                            ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+                            ? "bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300"
                             : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
                         }`}
                       >
@@ -213,7 +213,7 @@ export default function SlotsManager() {
                         <button
                           onClick={() => openEdit(s)}
                           title="تعديل"
-                          className="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-600 hover:bg-amber-100"
+                          className="p-2 rounded-lg bg-accent-50 dark:bg-accent-900/20 text-accent-600 hover:bg-accent-100"
                         >
                           <Pencil size={15} />
                         </button>
@@ -241,21 +241,21 @@ export default function SlotsManager() {
           onClick={() => !saving && setFormOpen(false)}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
+            className="bg-white dark:bg-navy-800 rounded-2xl w-full max-w-md p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-bold text-lg">{editing ? "تعديل ميعاد" : "إضافة ميعاد جديد"}</h3>
               <button
                 onClick={() => setFormOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-700"
               >
                 <X size={18} />
               </button>
             </div>
 
             {subjects.length === 0 ? (
-              <p className="text-sm text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-4 rounded-xl">
+              <p className="text-sm text-accent-600 bg-accent-50 dark:bg-accent-900/20 p-4 rounded-xl">
                 ⚠️ لازم تضيف مادة الأول من تاب &quot;المواد&quot; قبل ما تقدر تضيف مواعيد
               </p>
             ) : (
@@ -328,7 +328,7 @@ export default function SlotsManager() {
                   <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2"
+                    className="flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2"
                   >
                     {saving && <Loader2 size={16} className="animate-spin" />}
                     {editing ? "حفظ التعديلات" : "إضافة"}
@@ -336,7 +336,7 @@ export default function SlotsManager() {
                   <button
                     onClick={() => setFormOpen(false)}
                     disabled={saving}
-                    className="px-5 py-2.5 rounded-xl font-bold bg-gray-100 dark:bg-gray-700"
+                    className="px-5 py-2.5 rounded-xl font-bold bg-slate-100 dark:bg-navy-700"
                   >
                     إلغاء
                   </button>

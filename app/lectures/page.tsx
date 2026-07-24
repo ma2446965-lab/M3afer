@@ -40,7 +40,7 @@ function PaymentBanner() {
     },
     pending: {
       text: "⏳ استلمنا طلبك — أكمل الدفع بالطريقة اللي اخترتها وهيتفعل تلقائيًا فور التأكيد.",
-      cls: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-100"
+      cls: "bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-300 border-accent-100"
     },
     failed: {
       text: "❌ الدفع ما تمش — جرب تاني من صفحة المحاضرة.",
@@ -68,7 +68,7 @@ function Thumb({ path, title }: { path?: string | null; title: string }) {
     return <img src={url} alt={title} className="w-full h-36 object-cover" loading="lazy" />;
   }
   return (
-    <div className="w-full h-36 bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 flex items-center justify-center text-white/90">
+    <div className="w-full h-36 bg-gradient-to-br from-brand-500 via-brand-600 to-navy-700 flex items-center justify-center text-white/90">
       <PlayCircle size={44} className="opacity-80" />
     </div>
   );
@@ -184,16 +184,16 @@ function LecturesPageInner() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] dark:bg-gray-900">
-        <Loader2 className="animate-spin text-indigo-500" size={32} />
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-navy-900">
+        <Loader2 className="animate-spin text-brand-500" size={32} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] dark:bg-gray-900 pb-24 md:pb-0">
+    <div className="min-h-screen bg-slate-50 dark:bg-navy-900 pb-24 md:pb-0">
 
-      <div className="bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 text-white p-6 pt-6 pb-8 md:pt-10 rounded-b-[32px] relative overflow-hidden">
+      <div className="bg-gradient-to-br from-brand-600 via-brand-500 to-navy-700 text-white p-6 pt-6 pb-8 md:pt-10 rounded-b-[32px] relative overflow-hidden">
         <div className="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full blur-3xl -translate-y-20 translate-x-20" />
         <div className="relative max-w-5xl mx-auto">
           <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -210,17 +210,17 @@ function LecturesPageInner() {
 
         {/* Guest banner — browsing is free, buying needs an account */}
         {!user && (
-          <div className="bg-gradient-to-r from-sky-50 to-indigo-50 dark:from-sky-900/20 dark:to-indigo-900/20 border border-sky-200 dark:border-sky-800 rounded-2xl p-4 flex items-center gap-3 flex-wrap">
-            <div className="p-2.5 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-xl text-white shrink-0">
+          <div className="bg-gradient-to-r from-brand-50 to-slate-50 dark:from-brand-900/20 dark:to-navy-900/20 border border-brand-200 dark:border-brand-800 rounded-2xl p-4 flex items-center gap-3 flex-wrap">
+            <div className="p-2.5 bg-gradient-to-br from-brand-700 to-brand-500 rounded-xl text-white shrink-0">
               <LogIn size={20} />
             </div>
             <div className="flex-1 min-w-[200px]">
               <p className="font-bold text-sm">بتتفرج كضيف 👋 — اتفرج براحتك على العناوين والأسعار</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">سجّل دخولك بس عشان تشتري محاضرة أو تشوف المعاينات المجانية</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">سجّل دخولك بس عشان تشتري محاضرة أو تشوف المعاينات المجانية</p>
             </div>
             <Link
               href={`/auth/login?next=${encodeURIComponent("/lectures")}`}
-              className="bg-gradient-to-r from-sky-500 to-indigo-600 hover:opacity-95 text-white font-bold px-5 py-2.5 rounded-xl text-sm flex items-center gap-2"
+              className="bg-gradient-to-r from-brand-700 to-brand-500 hover:opacity-95 text-white font-bold px-5 py-2.5 rounded-xl text-sm flex items-center gap-2"
             >
               <LogIn size={16} /> دخول / حساب جديد
             </Link>
@@ -234,7 +234,7 @@ function LecturesPageInner() {
               key={s}
               onClick={() => setSubject(s)}
               className={`text-xs font-bold px-3.5 py-1.5 rounded-full whitespace-nowrap transition ${
-                subject === s ? "bg-indigo-600 text-white" : "bg-white dark:bg-gray-800 border dark:border-gray-700 text-gray-500"
+                subject === s ? "bg-brand-600 text-white" : "bg-white dark:bg-navy-800 border dark:border-navy-700 text-slate-500"
               }`}
             >
               {s}
@@ -242,31 +242,31 @@ function LecturesPageInner() {
           ))}
         </div>
         <div className="relative">
-          <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="دوّر على محاضرة أو مدرّس..."
-            className="w-full p-3 pr-9 rounded-xl border dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus:border-indigo-400"
+            className="w-full p-3 pr-9 rounded-xl border dark:border-navy-700 bg-white dark:bg-navy-800 text-sm outline-none focus:border-indigo-400"
           />
         </div>
 
         {/* bundle CTA */}
         {bundleQuote && bundleQuote.count >= 2 && (
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/10 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 flex items-center gap-3 flex-wrap">
-            <div className="p-2.5 bg-amber-500 rounded-xl text-white shrink-0">
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/10 border border-accent-200 dark:border-accent-800 rounded-2xl p-4 flex items-center gap-3 flex-wrap">
+            <div className="p-2.5 bg-accent-500 rounded-xl text-white shrink-0">
               <Package size={20} />
             </div>
             <div className="flex-1 min-w-[180px]">
               <p className="font-bold text-sm">باقة {subject} كاملة — {bundleQuote.count} محاضرة</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                بـ <b className="text-amber-600">{bundleQuote.totalEgp} ج.م</b> بدل {bundleQuote.grossEgp} ج.م — وفّر {bundleQuote.savedEgp} ج.م (خصم {Math.round(LECTURE_BUNDLE.discountPct * 100)}%)
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                بـ <b className="text-accent-600">{bundleQuote.totalEgp} ج.م</b> بدل {bundleQuote.grossEgp} ج.م — وفّر {bundleQuote.savedEgp} ج.م (خصم {Math.round(LECTURE_BUNDLE.discountPct * 100)}%)
               </p>
             </div>
             <button
               onClick={() => buyBundle(bundleQuote.subjectId)}
               disabled={payingBundle !== null}
-              className="bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white font-bold px-5 py-2.5 rounded-xl text-sm flex items-center gap-2"
+              className="bg-accent-500 hover:bg-accent-600 disabled:opacity-60 text-white font-bold px-5 py-2.5 rounded-xl text-sm flex items-center gap-2"
             >
               {payingBundle ? <Loader2 size={16} className="animate-spin" /> : <Package size={16} />}
               اشتري الباقة
@@ -280,14 +280,14 @@ function LecturesPageInner() {
         {fetching ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border dark:border-gray-700 animate-pulse">
-                <div className="h-36 bg-gray-200 dark:bg-gray-700" />
-                <div className="p-4 space-y-2"><div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" /><div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" /></div>
+              <div key={i} className="bg-white dark:bg-navy-800 rounded-2xl overflow-hidden border dark:border-navy-700 animate-pulse">
+                <div className="h-36 bg-slate-200 dark:bg-navy-700" />
+                <div className="p-4 space-y-2"><div className="h-4 bg-slate-200 dark:bg-navy-700 rounded w-3/4" /><div className="h-3 bg-slate-200 dark:bg-navy-700 rounded w-1/2" /></div>
               </div>
             ))}
           </div>
         ) : visible.length === 0 ? (
-          <div className="text-center p-12 bg-white dark:bg-gray-800 rounded-2xl border dark:border-gray-700 text-gray-400">
+          <div className="text-center p-12 bg-white dark:bg-navy-800 rounded-2xl border dark:border-navy-700 text-slate-400">
             <Clapperboard size={40} className="mx-auto mb-3 opacity-40" />
             <p className="font-bold">مفيش محاضرات هنا لسه</p>
             <p className="text-xs mt-1">جرب مادة تانية أو استنى جديدنا قريب 🎬</p>
@@ -301,7 +301,7 @@ function LecturesPageInner() {
                 <Link
                   key={l.id}
                   href={`/lectures/${l.id}`}
-                  className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border-2 border-transparent hover:border-indigo-400 dark:hover:border-indigo-500 transition group"
+                  className="bg-white dark:bg-navy-800 rounded-2xl overflow-hidden border-2 border-transparent hover:border-indigo-400 dark:hover:border-brand-500 transition group"
                 >
                   <div className="relative">
                     <Thumb path={l.thumbnailPath} title={l.title} />
@@ -316,21 +316,21 @@ function LecturesPageInner() {
                       </span>
                     )}
                     {free && l.isFreePreview && (
-                      <span className="absolute top-2 left-2 bg-emerald-600 text-white text-[11px] font-bold px-2 py-1 rounded-full flex items-center gap-1">
+                      <span className="absolute top-2 left-2 bg-brand-600 text-white text-[11px] font-bold px-2 py-1 rounded-full flex items-center gap-1">
                         <Gift size={11} /> معاينة مجانية
                       </span>
                     )}
                   </div>
                   <div className="p-4">
-                    <p className="font-bold text-sm leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition line-clamp-2">{l.title}</p>
-                    <p className="text-[11px] text-gray-400 mt-1.5 flex items-center gap-2">
+                    <p className="font-bold text-sm leading-snug group-hover:text-brand-600 dark:group-hover:text-indigo-400 transition line-clamp-2">{l.title}</p>
+                    <p className="text-[11px] text-slate-400 mt-1.5 flex items-center gap-2">
                       {l.teacherName && <span>👨‍🏫 {l.teacherName}</span>}
                       {!!l.durationMin && (
                         <span className="flex items-center gap-1"><Clock3 size={11} /> {l.durationMin} د</span>
                       )}
                     </p>
                     {!!l.subjectName && (
-                      <span className="inline-block mt-2 text-[10px] bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 px-2 py-0.5 rounded-full">
+                      <span className="inline-block mt-2 text-[10px] bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-300 px-2 py-0.5 rounded-full">
                         {l.subjectName}
                       </span>
                     )}
@@ -338,7 +338,7 @@ function LecturesPageInner() {
                         a link to this lecture); the tappable course cross-link
                         lives on the lecture detail page. */}
                     {!!l.courseId && courseTitles.has(l.courseId) && (
-                      <span className="inline-flex items-center gap-1 mt-2 ms-1.5 text-[10px] bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-300 px-2 py-0.5 rounded-full font-bold">
+                      <span className="inline-flex items-center gap-1 mt-2 ms-1.5 text-[10px] bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-300 px-2 py-0.5 rounded-full font-bold">
                         <Package size={10} /> من كورس: {courseTitles.get(l.courseId)}
                       </span>
                     )}

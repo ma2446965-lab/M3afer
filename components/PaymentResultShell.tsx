@@ -37,9 +37,9 @@ const CONFIG: Record<
 > = {
   success: {
     icon: CheckCircle2,
-    gradient: "from-emerald-500 via-green-600 to-teal-600",
+    gradient: "from-brand-600 via-brand-500 to-navy-700",
     ring: "shadow-[0_0_0_6px_rgba(16,185,129,0.15)]",
-    iconWrap: "bg-emerald-100 text-emerald-600",
+    iconWrap: "bg-brand-100 text-brand-600",
     title: "الدفع تم بنجاح ✅",
     body: "بنفعّل طلبك تلقائيًا خلال ثوانٍ — مفيش أي خطوة مطلوبة منك. أول ما التفعيل يتم هتفتحلك المزايا على طول.",
     hint: "هنرجعك لمكانك تلقائيًا...",
@@ -63,9 +63,9 @@ const CONFIG: Record<
   },
   pending: {
     icon: Clock3,
-    gradient: "from-amber-500 via-orange-500 to-yellow-500",
+    gradient: "from-accent-500 via-accent-400 to-accent-300",
     ring: "shadow-[0_0_0_6px_rgba(245,158,11,0.15)]",
-    iconWrap: "bg-amber-100 text-amber-600",
+    iconWrap: "bg-accent-100 text-accent-600",
     title: "طلبك قيد المراجعة ⏳",
     body: "استلمنا طلبك. لو هتكمل الدفع بفوري/محفظة، التفعيل بيحصل تلقائيًا أول ما فاتورتي تأكد التحصيل — وهتلاقي طلبك اتفتح من نفسه.",
     hint: "عمرك ما هتحتاج تبعت إيصال — التأكيد أوتوماتيك بالكامل.",
@@ -99,7 +99,7 @@ function ShellInner({ kind }: { kind: PaymentResultKind }) {
 
   const Icon = c.icon;
   return (
-    <div className="min-h-screen bg-[#f8fafc] dark:bg-gray-900">
+    <div className="min-h-screen bg-slate-50 dark:bg-navy-900">
       <div className={`bg-gradient-to-br ${c.gradient} text-white px-6 pt-14 pb-20 rounded-b-[40px] relative overflow-hidden`}>
         <div className="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full blur-3xl -translate-y-20 translate-x-20" />
         <div className="relative max-w-lg mx-auto text-center">
@@ -109,14 +109,14 @@ function ShellInner({ kind }: { kind: PaymentResultKind }) {
       </div>
 
       <div className="max-w-lg mx-auto px-4 -mt-12 pb-10">
-        <div className={`bg-white dark:bg-gray-800 rounded-[28px] p-8 text-center border dark:border-gray-700 ${c.ring} space-y-5`}>
+        <div className={`bg-white dark:bg-navy-800 rounded-[28px] p-8 text-center border dark:border-navy-700 ${c.ring} space-y-5`}>
           <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center ${c.iconWrap}`}>
             <Icon size={44} strokeWidth={2.2} />
           </div>
           <div>
             <h2 className="text-2xl font-black">{c.title}</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mt-3">{c.body}</p>
-            <p className="text-xs text-gray-400 mt-2">{c.hint}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mt-3">{c.body}</p>
+            <p className="text-xs text-slate-400 mt-2">{c.hint}</p>
           </div>
 
           <div className="space-y-2.5 pt-1">
@@ -130,14 +130,14 @@ function ShellInner({ kind }: { kind: PaymentResultKind }) {
             {c.showSupport && (
               <Link
                 href="/messages"
-                className="w-full bg-fuchsia-50 dark:bg-fuchsia-900/20 text-fuchsia-600 dark:text-fuchsia-300 font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/40 transition"
+                className="w-full bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-300 font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-brand-100 dark:hover:bg-brand-900/40 transition"
               >
                 <MessagesSquare size={16} /> الدعم معاك — اسألنا 💬
               </Link>
             )}
             <Link
               href="/"
-              className="w-full text-gray-500 dark:text-gray-400 font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700/60 transition text-sm"
+              className="w-full text-slate-500 dark:text-slate-400 font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-50 dark:hover:bg-gray-700/60 transition text-sm"
             >
               <Home size={15} /> الرئيسية
             </Link>
@@ -153,8 +153,8 @@ export default function PaymentResultShell({ kind }: { kind: PaymentResultKind }
     <ErrorBoundary>
       <Suspense
         fallback={
-          <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] dark:bg-gray-900">
-            <Loader2 className="animate-spin text-sky-500" size={30} />
+          <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-navy-900">
+            <Loader2 className="animate-spin text-brand-500" size={30} />
           </div>
         }
       >

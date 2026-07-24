@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { createPortal } from "react-dom";
-import { Menu, X, Moon, Sun, Languages, CreditCard, MessageCircle, LogOut, Shield, BookOpen, CalendarPlus, CalendarCheck, CalendarDays, Clapperboard, Home, MessagesSquare, Package } from "lucide-react";
+import { Menu, X, Moon, Sun, CreditCard, MessageCircle, LogOut, Shield, BookOpen, CalendarPlus, CalendarCheck, CalendarDays, Clapperboard, Home, MessagesSquare, Package } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
@@ -11,10 +11,11 @@ import { homeHrefForRole } from "@/lib/nav";
  * Mobile-only drawer (md+ uses the persistent SideNav instead).
  * The trigger renders in normal flow — AppShell mounts it inside the mobile
  * top bar — so it no longer floats over page content.
+ * Language toggle removed — platform is Arabic-only.
  */
 export default function HamburgerMenu() {
   const [open, setOpen] = useState(false);
-  const { theme, language, toggleTheme, setLanguage, setFabVisible, isFabVisible } = useTheme();
+  const { theme, toggleTheme, setFabVisible, isFabVisible } = useTheme();
   const { profile, logout } = useAuth();
   const isAdmin = profile?.role === "admin";
   const homeHref = homeHrefForRole(profile?.role);
@@ -24,34 +25,28 @@ export default function HamburgerMenu() {
       <button
         onClick={() => setOpen(true)}
         aria-label="فتح القائمة"
-        className="md:hidden p-2.5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+        className="md:hidden p-2.5 bg-white dark:bg-navy-800 rounded-xl shadow-sm border border-slate-100 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-700 transition"
       >
         <Menu size={20} />
       </button>
 
       {open &&
-        // ⚠️ PORTAL IS MANDATORY HERE: this component is mounted inside the
-        // mobile top bar whose `backdrop-blur-lg` (backdrop-filter) makes the
-        // header the containing block for any `fixed` descendant — without a
-        // portal the whole drawer gets squeezed into the 56px header box
-        // (verified: drawer rendered 332×55, content invisible). Rendering at
-        // document.body restores viewport-based positioning.
         createPortal(
         <div className="md:hidden fixed inset-0 z-[100] flex">
           {/* backdrop */}
           <div className="flex-1 bg-black/40 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          
+
           {/* drawer */}
-          <div className="w-[85%] max-w-[360px] bg-white dark:bg-gray-900 h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 overflow-y-auto">
+          <div className="w-[85%] max-w-[360px] bg-white dark:bg-navy-900 h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 overflow-y-auto">
             {/* header */}
-            <div className="p-6 bg-gradient-to-br from-sky-500 to-indigo-600 text-white relative overflow-hidden">
+            <div className="p-6 bg-brand-gradient text-white relative overflow-hidden">
               <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-2xl -translate-y-10 translate-x-10" />
               <button onClick={() => setOpen(false)} className="absolute top-4 left-4 p-2 bg-white/20 rounded-full hover:bg-white/30">
                 <X size={18} />
               </button>
               <div className="relative mt-6">
                 <h2 className="text-2xl font-bold">Meafer.ai</h2>
-                <p className="text-white/80 text-sm mt-1">منصة الثانوية العامة الذكية 🧠</p>
+                <p className="text-white/80 text-sm mt-1">منصة الثانوية العامة الذكية</p>
                 {profile && (
                   <div className="mt-4 bg-white/15 rounded-xl p-3 backdrop-blur">
                     <p className="text-xs opacity-80">الطالب</p>
@@ -68,135 +63,120 @@ export default function HamburgerMenu() {
               {/* Theme toggle */}
               <button
                 onClick={toggleTheme}
-                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 transition"
               >
-                <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                <div className="p-2 bg-slate-100 dark:bg-navy-800 rounded-lg text-brand-600">
                   {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
                 </div>
                 <div className="flex-1 text-right">
-                  <p className="font-medium text-sm">{language === "ar" ? (theme === "light" ? "الوضع الليلي" : "الوضع النهاري") : (theme === "light" ? "Dark Mode" : "Light Mode")}</p>
-                  <p className="text-xs text-gray-500">{theme === "light" ? "فعل الوضع الداكن" : "فعل الوضع الفاتح"}</p>
-                </div>
-              </button>
-
-              {/* Language */}
-              <button
-                onClick={() => setLanguage(language === "ar" ? "en" : "ar")}
-                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-              >
-                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
-                  <Languages size={18} />
-                </div>
-                <div className="flex-1 text-right">
-                  <p className="font-medium text-sm">اللغة / Language</p>
-                  <p className="text-xs text-gray-500">{language === "ar" ? "English" : "العربية"}</p>
+                  <p className="font-medium text-sm">{theme === "light" ? "الوضع الليلي" : "الوضع النهاري"}</p>
+                  <p className="text-xs text-slate-500">{theme === "light" ? "فعل الوضع الداكن" : "فعل الوضع الفاتح"}</p>
                 </div>
               </button>
 
               {/* FAB Toggle */}
               <button
                 onClick={() => setFabVisible(!isFabVisible)}
-                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 transition"
               >
-                <div className="p-2 bg-sky-50 dark:bg-sky-900/30 rounded-lg text-sky-600 dark:text-sky-400">
+                <div className="p-2 bg-brand-50 dark:bg-brand-900/30 rounded-lg text-brand-600 dark:text-brand-400">
                   <MessageCircle size={18} />
                 </div>
                 <div className="flex-1 text-right">
                   <p className="font-medium text-sm">{isFabVisible ? "إخفاء المساعد الذكي" : "إظهار المساعد الذكي"}</p>
-                  <p className="text-xs text-gray-500">{isFabVisible ? "المساعد ظاهر حالياً" : "المساعد مخفي"}</p>
+                  <p className="text-xs text-slate-500">{isFabVisible ? "المساعد ظاهر حالياً" : "المساعد مخفي"}</p>
                 </div>
               </button>
 
-              <div className="border-t border-gray-100 dark:border-gray-800 my-3" />
+              <div className="border-t border-slate-100 dark:border-navy-800 my-3" />
 
-              {/* Universal "back to home" — admins land on their dashboard */}
-              <Link href={homeHref} onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-                <div className="p-2 bg-sky-50 dark:bg-sky-900/30 rounded-lg text-sky-600 dark:text-sky-400">
+              <Link href={homeHref} onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 transition">
+                <div className="p-2 bg-brand-50 dark:bg-brand-900/30 rounded-lg text-brand-600 dark:text-brand-400">
                   <Home size={18} />
                 </div>
                 <div className="flex-1 text-right">
                   <p className="font-medium text-sm">{isAdmin ? "لوحة الأدمن" : "الرئيسية"}</p>
-                  <p className="text-xs text-gray-500">{isAdmin ? "الرجوع للوحة التحكم" : "الرجوع للصفحة الرئيسية"}</p>
+                  <p className="text-xs text-slate-500">{isAdmin ? "الرجوع للوحة التحكم" : "الرجوع للصفحة الرئيسية"}</p>
                 </div>
               </Link>
 
-              <Link href="/subscription" onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-                <div className="p-2 bg-amber-50 dark:bg-amber-900/30 rounded-lg text-amber-600">
+              <Link href="/subscription" onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 transition">
+                <div className="p-2 bg-accent-50 dark:bg-accent-900/30 rounded-lg text-accent-600">
                   <CreditCard size={18} />
                 </div>
                 <div className="flex-1 text-right">
                   <p className="font-medium text-sm">الاشتراك</p>
-                  <p className="text-xs text-gray-500">من 150 ج.م/شهر — فتح كل المميزات ✨</p>
+                  <p className="text-xs text-slate-500">من 99 ج.م — فتح كل المميزات</p>
                 </div>
               </Link>
 
-              <Link href="/lectures" onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg text-indigo-600">
+              <Link href="/lectures" onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 transition">
+                <div className="p-2 bg-brand-50 dark:bg-brand-900/30 rounded-lg text-brand-600">
                   <Clapperboard size={18} />
                 </div>
                 <div className="flex-1 text-right">
-                  <p className="font-medium text-sm flex items-center gap-2">المحاضرات <span className="text-[10px] bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded-full font-bold">جديد ✨</span></p>
-                  <p className="text-xs text-gray-500">محاضرات مسجلة تشتريها وتفضل معاك — معاينات مجانية 🎬</p>
+                  <p className="font-medium text-sm flex items-center gap-2">المحاضرات <span className="text-[10px] bg-brand-100 dark:bg-brand-900/40 text-brand-600 dark:text-brand-300 px-1.5 py-0.5 rounded-full font-bold">جديد</span></p>
+                  <p className="text-xs text-slate-500">محاضرات مسجلة — معاينات مجانية</p>
                 </div>
               </Link>
 
-              <Link href="/courses" onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-                <div className="p-2 bg-violet-50 dark:bg-violet-900/30 rounded-lg text-violet-600 dark:text-violet-400">
+              <Link href="/courses" onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 transition">
+                <div className="p-2 bg-brand-50 dark:bg-brand-900/30 rounded-lg text-brand-600 dark:text-brand-400">
                   <Package size={18} />
                 </div>
                 <div className="flex-1 text-right">
-                  <p className="font-medium text-sm flex items-center gap-2">الكورسات <span className="text-[10px] bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-300 px-1.5 py-0.5 rounded-full font-bold">جديد ✨</span></p>
-                  <p className="text-xs text-gray-500">مسارات كاملة محاضرة ورا محاضرة — بخصم 📦</p>
+                  <p className="font-medium text-sm flex items-center gap-2">الكورسات <span className="text-[10px] bg-brand-100 dark:bg-brand-900/40 text-brand-600 dark:text-brand-300 px-1.5 py-0.5 rounded-full font-bold">جديد</span></p>
+                  <p className="text-xs text-slate-500">مسارات كاملة محاضرة ورا محاضرة — بخصم</p>
                 </div>
               </Link>
 
-              <Link href="/messages" onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-                <div className="p-2 bg-fuchsia-50 dark:bg-fuchsia-900/30 rounded-lg text-fuchsia-600 dark:text-fuchsia-400">
+              <Link href="/messages" onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 transition">
+                <div className="p-2 bg-brand-50 dark:bg-brand-900/30 rounded-lg text-brand-600 dark:text-brand-400">
                   <MessagesSquare size={18} />
                 </div>
                 <div className="flex-1 text-right">
-                  <p className="font-medium text-sm flex items-center gap-2">الرسائل <span className="text-[10px] bg-fuchsia-100 dark:bg-fuchsia-900/40 text-fuchsia-600 dark:text-fuchsia-300 px-1.5 py-0.5 rounded-full font-bold">جديد ✨</span></p>
-                  <p className="text-xs text-gray-500">كلم صحابك المشتركين + دعم مِعافر 💬</p>
+                  <p className="font-medium text-sm flex items-center gap-2">الرسائل <span className="text-[10px] bg-brand-100 dark:bg-brand-900/40 text-brand-600 dark:text-brand-300 px-1.5 py-0.5 rounded-full font-bold">جديد</span></p>
+                  <p className="text-xs text-slate-500">كلم صحابك المشتركين + دعم مِعافر</p>
                 </div>
               </Link>
 
-              <Link href="/planner" onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-                <div className="p-2 bg-teal-50 dark:bg-teal-900/30 rounded-lg text-teal-600">
+              <Link href="/planner" onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 transition">
+                <div className="p-2 bg-brand-50 dark:bg-brand-900/30 rounded-lg text-brand-600">
                   <CalendarDays size={18} />
                 </div>
                 <div className="flex-1 text-right">
-                  <p className="font-medium text-sm flex items-center gap-2">جدولي <span className="text-[10px] bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-300 px-1.5 py-0.5 rounded-full font-bold">جديد ✨</span></p>
-                  <p className="text-xs text-gray-500">جدول مذاكرة مخصوص — 50 ج.م، الرد خلال 24 ساعة</p>
+                  <p className="font-medium text-sm flex items-center gap-2">جدولي <span className="text-[10px] bg-brand-100 dark:bg-brand-900/40 text-brand-600 dark:text-brand-300 px-1.5 py-0.5 rounded-full font-bold">جديد</span></p>
+                  <p className="text-xs text-slate-500">جدول مذاكرة مخصوص — 50 ج.م</p>
                 </div>
               </Link>
 
-              <Link href="/library" onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-                <div className="p-2 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg text-emerald-600">
+              <Link href="/library" onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 transition">
+                <div className="p-2 bg-brand-50 dark:bg-brand-900/30 rounded-lg text-brand-600">
                   <BookOpen size={18} />
                 </div>
                 <div className="flex-1 text-right">
                   <p className="font-medium text-sm">المكتبة والملفات</p>
-                  <p className="text-xs text-gray-500">كل الـ PDFs والملخصات</p>
+                  <p className="text-xs text-slate-500">كل الـ PDFs والملخصات</p>
                 </div>
               </Link>
 
-              <Link href="/booking" onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-                <div className="p-2 bg-teal-50 dark:bg-teal-900/30 rounded-lg text-teal-600 dark:text-teal-400">
+              <Link href="/booking" onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 transition">
+                <div className="p-2 bg-brand-50 dark:bg-brand-900/30 rounded-lg text-brand-600 dark:text-brand-400">
                   <CalendarPlus size={18} />
                 </div>
                 <div className="flex-1 text-right">
                   <p className="font-medium text-sm">احجز حصتك</p>
-                  <p className="text-xs text-gray-500">مواعيد الحصص المتاحة</p>
+                  <p className="text-xs text-slate-500">مواعيد الحصص المتاحة</p>
                 </div>
               </Link>
 
-              <Link href="/schedule" onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-                <div className="p-2 bg-violet-50 dark:bg-violet-900/30 rounded-lg text-violet-600 dark:text-violet-400">
+              <Link href="/schedule" onClick={() => setOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 transition">
+                <div className="p-2 bg-brand-50 dark:bg-brand-900/30 rounded-lg text-brand-600 dark:text-brand-400">
                   <CalendarCheck size={18} />
                 </div>
                 <div className="flex-1 text-right">
                   <p className="font-medium text-sm">حصصي</p>
-                  <p className="text-xs text-gray-500">حصصك المحجوزة بالتاريخ</p>
+                  <p className="text-xs text-slate-500">حصصك المحجوزة بالتاريخ</p>
                 </div>
               </Link>
 
@@ -212,7 +192,7 @@ export default function HamburgerMenu() {
                 </Link>
               )}
 
-              <div className="border-t border-gray-100 dark:border-gray-800 my-3" />
+              <div className="border-t border-slate-100 dark:border-navy-800 my-3" />
 
               <button
                 onClick={() => { logout(); setOpen(false); }}
@@ -226,7 +206,7 @@ export default function HamburgerMenu() {
             </div>
 
             <div className="p-4 text-center">
-              <p className="text-[11px] text-gray-400">Meafer.ai v1.0 • صنع بكل حب لطلاب الثانوية العامة ❤️</p>
+              <p className="text-[11px] text-slate-400">Meafer.ai v1.0 • صنع بكل حب لطلاب الثانوية العامة</p>
             </div>
           </div>
         </div>,

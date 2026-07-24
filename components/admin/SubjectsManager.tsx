@@ -6,8 +6,8 @@ import { Subject, SubjectInput, EMPTY_SUBJECT } from "@/lib/booking";
 import { Plus, Pencil, Trash2, X, Loader2, BookOpen } from "lucide-react";
 
 const inputCls =
-  "w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500";
-const labelCls = "text-xs font-bold text-gray-500 dark:text-gray-400 mb-1 block";
+  "w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-700 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500";
+const labelCls = "text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 block";
 
 export default function SubjectsManager() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -102,17 +102,17 @@ export default function SubjectsManager() {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border dark:border-gray-700 overflow-hidden">
-      <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+    <div className="bg-white dark:bg-navy-800 rounded-2xl border dark:border-navy-700 overflow-hidden">
+      <div className="flex items-center justify-between p-4 border-b dark:border-navy-700">
         <h2 className="font-bold flex items-center gap-2">
           <BookOpen size={18} /> المواد الدراسية
-          <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 px-2 py-0.5 rounded-full">
+          <span className="text-xs bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-gray-300 px-2 py-0.5 rounded-full">
             {subjects.length}
           </span>
         </h2>
         <button
           onClick={openAdd}
-          className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-4 py-2 rounded-xl"
+          className="flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold px-4 py-2 rounded-xl"
         >
           <Plus size={16} /> إضافة مادة
         </button>
@@ -120,19 +120,19 @@ export default function SubjectsManager() {
 
       {listLoading ? (
         <div className="p-10 flex justify-center">
-          <Loader2 className="animate-spin text-gray-400" />
+          <Loader2 className="animate-spin text-slate-400" />
         </div>
       ) : listError ? (
         <p className="p-6 text-sm text-red-500">{listError}</p>
       ) : subjects.length === 0 ? (
-        <p className="p-8 text-center text-sm text-gray-400">
+        <p className="p-8 text-center text-sm text-slate-400">
           مفيش مواد لسه — دوس &quot;إضافة مادة&quot; وابدأ 📚
         </p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[680px]">
             <thead>
-              <tr className="text-xs text-gray-400 border-b dark:border-gray-700 text-right">
+              <tr className="text-xs text-slate-400 border-b dark:border-navy-700 text-right">
                 <th className="p-3 font-medium">الصورة</th>
                 <th className="p-3 font-medium">اسم المادة</th>
                 <th className="p-3 font-medium">المدرس</th>
@@ -143,23 +143,23 @@ export default function SubjectsManager() {
             </thead>
             <tbody className="divide-y dark:divide-gray-700">
               {subjects.map((s) => (
-                <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-gray-700/30">
                   <td className="p-3">
                     {s.imageUrl ? (
                       <img
                         src={s.imageUrl}
                         alt=""
-                        className="w-11 h-11 rounded-lg object-cover bg-gray-100 dark:bg-gray-700"
+                        className="w-11 h-11 rounded-lg object-cover bg-slate-100 dark:bg-navy-700"
                       />
                     ) : (
-                      <div className="w-11 h-11 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-lg">
+                      <div className="w-11 h-11 rounded-lg bg-slate-100 dark:bg-navy-700 flex items-center justify-center text-lg">
                         📚
                       </div>
                     )}
                   </td>
                   <td className="p-3 font-bold">{s.name}</td>
-                  <td className="p-3 text-gray-500 dark:text-gray-400">{s.teacherName}</td>
-                  <td className="p-3 text-gray-500 dark:text-gray-400 max-w-[220px]">
+                  <td className="p-3 text-slate-500 dark:text-slate-400">{s.teacherName}</td>
+                  <td className="p-3 text-slate-500 dark:text-slate-400 max-w-[220px]">
                     <span className="line-clamp-2 text-xs">{s.description || "—"}</span>
                   </td>
                   <td className="p-3 font-bold whitespace-nowrap">{s.price} ج.م</td>
@@ -168,7 +168,7 @@ export default function SubjectsManager() {
                       <button
                         onClick={() => openEdit(s)}
                         title="تعديل"
-                        className="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-600 hover:bg-amber-100"
+                        className="p-2 rounded-lg bg-accent-50 dark:bg-accent-900/20 text-accent-600 hover:bg-accent-100"
                       >
                         <Pencil size={15} />
                       </button>
@@ -195,14 +195,14 @@ export default function SubjectsManager() {
           onClick={() => !saving && setFormOpen(false)}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
+            className="bg-white dark:bg-navy-800 rounded-2xl w-full max-w-md p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-bold text-lg">{editing ? "تعديل مادة" : "إضافة مادة جديدة"}</h3>
               <button
                 onClick={() => setFormOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-700"
               >
                 <X size={18} />
               </button>
@@ -260,7 +260,7 @@ export default function SubjectsManager() {
                   <img
                     src={form.imageUrl}
                     alt=""
-                    className="mt-2 w-full h-32 object-cover rounded-lg bg-gray-100 dark:bg-gray-700"
+                    className="mt-2 w-full h-32 object-cover rounded-lg bg-slate-100 dark:bg-navy-700"
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = "none";
                     }}
@@ -278,7 +278,7 @@ export default function SubjectsManager() {
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2"
+                  className="flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2"
                 >
                   {saving && <Loader2 size={16} className="animate-spin" />}
                   {editing ? "حفظ التعديلات" : "إضافة"}
@@ -286,7 +286,7 @@ export default function SubjectsManager() {
                 <button
                   onClick={() => setFormOpen(false)}
                   disabled={saving}
-                  className="px-5 py-2.5 rounded-xl font-bold bg-gray-100 dark:bg-gray-700"
+                  className="px-5 py-2.5 rounded-xl font-bold bg-slate-100 dark:bg-navy-700"
                 >
                   إلغاء
                 </button>

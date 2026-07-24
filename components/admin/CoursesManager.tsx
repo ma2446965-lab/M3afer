@@ -60,7 +60,7 @@ function Thumb({ path }: { path?: string | null }) {
     if (path) getDownloadURL(ref(storage, path)).then((u) => on && setUrl(u)).catch(() => {});
     return () => { on = false; };
   }, [path]);
-  if (!url) return <div className="w-14 h-10 rounded-lg bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center text-violet-400"><Package size={16} /></div>;
+  if (!url) return <div className="w-14 h-10 rounded-lg bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center text-violet-400"><Package size={16} /></div>;
   return <img src={url} alt="" className="w-14 h-10 rounded-lg object-cover" />;
 }
 
@@ -287,46 +287,46 @@ export default function CoursesManager() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="font-bold flex items-center gap-2"><Package size={18} className="text-violet-500" /> إدارة الكورسات</h2>
+        <h2 className="font-bold flex items-center gap-2"><Package size={18} className="text-brand-500" /> إدارة الكورسات</h2>
         <div className="flex gap-2">
-          <button onClick={() => setTick((t) => t + 1)} className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700" title="تحديث"><RefreshCw size={14} /></button>
-          <button onClick={() => { resetForm(); setShowForm(!showForm); }} className="bg-violet-600 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5">
+          <button onClick={() => setTick((t) => t + 1)} className="p-2 rounded-lg bg-slate-100 dark:bg-navy-700" title="تحديث"><RefreshCw size={14} /></button>
+          <button onClick={() => { resetForm(); setShowForm(!showForm); }} className="bg-brand-600 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5">
             {showForm ? <X size={14} /> : <PlusCircle size={14} />} {showForm ? "إلغاء" : "كورس جديد"}
           </button>
         </div>
       </div>
 
       {showForm && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-violet-400 p-4 space-y-3">
+        <div className="bg-white dark:bg-navy-800 rounded-2xl border-2 border-violet-400 p-4 space-y-3">
           <h3 className="font-bold text-sm">{editingId ? "تعديل كورس ✏️" : "كورس جديد 📦"}</h3>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="اسم الكورس * (مثال: فيزياء — الباب الأول كامل)" className="w-full p-2.5 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm" />
+          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="اسم الكورس * (مثال: فيزياء — الباب الأول كامل)" className="w-full p-2.5 rounded-xl border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 text-sm" />
           <div className="grid grid-cols-2 gap-2">
-            <select value={subjectId} onChange={(e) => pickSubject(e.target.value)} className="p-2.5 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm">
+            <select value={subjectId} onChange={(e) => pickSubject(e.target.value)} className="p-2.5 rounded-xl border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 text-sm">
               <option value="">المادة... *</option>
               {subjects.map((s) => (
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
             </select>
-            <input value={teacherName} onChange={(e) => setTeacherName(e.target.value)} placeholder="اسم المدرّس" className="p-2.5 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm" />
+            <input value={teacherName} onChange={(e) => setTeacherName(e.target.value)} placeholder="اسم المدرّس" className="p-2.5 rounded-xl border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 text-sm" />
           </div>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="وصف الكورس (يظهر في صفحة الكورس)" className="w-full p-2.5 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm resize-none" />
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="وصف الكورس (يظهر في صفحة الكورس)" className="w-full p-2.5 rounded-xl border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 text-sm resize-none" />
           <div className="grid grid-cols-3 gap-2">
-            <label className="text-xs font-bold p-2.5 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 flex items-center gap-1.5">
+            <label className="text-xs font-bold p-2.5 rounded-xl border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 flex items-center gap-1.5">
               خصم %
               <input value={discountPct} onChange={(e) => setDiscountPct(e.target.value)} type="number" min={0} max={COURSE_DISCOUNT_CAP * 100} className="w-14 bg-transparent outline-none" />
             </label>
-            <input value={order} onChange={(e) => setOrder(e.target.value)} type="number" min={0} placeholder="الترتيب" className="p-2.5 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm" />
-            <label className="flex items-center gap-1.5 text-xs font-bold p-2.5 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 cursor-pointer">
-              <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} className="accent-violet-500" /> منشور
+            <input value={order} onChange={(e) => setOrder(e.target.value)} type="number" min={0} placeholder="الترتيب" className="p-2.5 rounded-xl border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 text-sm" />
+            <label className="flex items-center gap-1.5 text-xs font-bold p-2.5 rounded-xl border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 cursor-pointer">
+              <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} className="accent-brand-500" /> منشور
             </label>
           </div>
-          <p className="text-[11px] text-gray-400">سعر الكورس بيتحسب أوتوماتيك = مجموع أسعار محاضراته (اللي الطالب مش مالكها) − الخصم. الأسعار بتتظبط من تبويب المحاضرات 🎬.</p>
-          <label className="text-xs p-2.5 rounded-xl border-2 border-dashed dark:border-gray-600 text-gray-500 flex items-center gap-2 cursor-pointer">
+          <p className="text-[11px] text-slate-400">سعر الكورس بيتحسب أوتوماتيك = مجموع أسعار محاضراته (اللي الطالب مش مالكها) − الخصم. الأسعار بتتظبط من تبويب المحاضرات 🎬.</p>
+          <label className="text-xs p-2.5 rounded-xl border-2 border-dashed dark:border-navy-600 text-slate-500 flex items-center gap-2 cursor-pointer">
             <UploadCloud size={14} /> {thumbFile ? thumbFile.name : "صورة غلاف الكورس (اختياري)"}
             <input type="file" accept="image/*" className="hidden" onChange={(e) => setThumbFile(e.target.files?.[0] || null)} />
           </label>
           {formErr && <p className="text-xs text-red-500 flex items-center gap-1"><AlertTriangle size={12} /> {formErr}</p>}
-          <button onClick={save} disabled={saving} className="w-full bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 text-sm">
+          <button onClick={save} disabled={saving} className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 text-sm">
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} {saving ? "بيترفع..." : editingId ? "حفظ التعديلات" : "حفظ الكورس"}
           </button>
         </div>
@@ -334,9 +334,9 @@ export default function CoursesManager() {
 
       {err && <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-xl">{err}</p>}
       {loading ? (
-        <div className="p-10 flex justify-center"><Loader2 className="animate-spin text-violet-500" /></div>
+        <div className="p-10 flex justify-center"><Loader2 className="animate-spin text-brand-500" /></div>
       ) : courses.length === 0 ? (
-        <p className="text-sm text-gray-400 text-center p-8 bg-white dark:bg-gray-800 rounded-2xl border dark:border-gray-700">
+        <p className="text-sm text-slate-400 text-center p-8 bg-white dark:bg-navy-800 rounded-2xl border dark:border-navy-700">
           <Package className="mx-auto mb-2 opacity-50" /> لسه مفيش كورسات — اعمل أول كورس واربط فيه محاضراتك
         </p>
       ) : (
@@ -346,32 +346,32 @@ export default function CoursesManager() {
             const courseLectures = sortCourseLectures(lectures.filter((l) => l.courseId === c.id));
             const expanded = expandedId === c.id;
             return (
-              <div key={c.id} className="bg-white dark:bg-gray-800 rounded-2xl border dark:border-gray-700 p-3.5 space-y-2">
+              <div key={c.id} className="bg-white dark:bg-navy-800 rounded-2xl border dark:border-navy-700 p-3.5 space-y-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   <Thumb path={c.thumbnailPath} />
                   <div className="flex-1 min-w-[160px]">
                     <p className="font-bold text-sm">{c.title}</p>
-                    <p className="text-[11px] text-gray-400">{c.subjectName}{c.teacherName ? ` • ${c.teacherName}` : ""} • خصم {Math.round((c.discountPct ?? 0) * 100)}% • ترتيب {c.order ?? 0}</p>
+                    <p className="text-[11px] text-slate-400">{c.subjectName}{c.teacherName ? ` • ${c.teacherName}` : ""} • خصم {Math.round((c.discountPct ?? 0) * 100)}% • ترتيب {c.order ?? 0}</p>
                   </div>
-                  <span className="text-[10px] bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-300 px-2 py-0.5 rounded-full font-bold">
+                  <span className="text-[10px] bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-300 px-2 py-0.5 rounded-full font-bold">
                     {c.lectureCount ?? courseLectures.length} محاضرة
                   </span>
-                  <label className="text-[11px] flex items-center gap-1 font-bold text-gray-500 cursor-pointer">
-                    <input type="checkbox" checked={c.published !== false} onChange={(e) => patch(c.id, { published: e.target.checked })} className="accent-violet-500" /> منشور
+                  <label className="text-[11px] flex items-center gap-1 font-bold text-slate-500 cursor-pointer">
+                    <input type="checkbox" checked={c.published !== false} onChange={(e) => patch(c.id, { published: e.target.checked })} className="accent-brand-500" /> منشور
                   </label>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <button onClick={() => setExpandedId(expanded ? null : c.id)} className="text-[11px] bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-300 px-2.5 py-1.5 rounded-lg font-bold">
+                  <button onClick={() => setExpandedId(expanded ? null : c.id)} className="text-[11px] bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-300 px-2.5 py-1.5 rounded-lg font-bold">
                     {expanded ? "قفل القايمة ▲" : `المحاضرات (${courseLectures.length}) ▼`}
                   </button>
-                  <button onClick={() => openEdit(c)} className="text-[11px] bg-gray-100 dark:bg-gray-700 px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-1 text-gray-600 dark:text-gray-300">
+                  <button onClick={() => openEdit(c)} className="text-[11px] bg-slate-100 dark:bg-navy-700 px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-1 text-slate-600 dark:text-gray-300">
                     <Pencil size={12} /> تعديل
                   </button>
-                  <button onClick={() => loadStats(c.id)} className="text-[11px] bg-gray-100 dark:bg-gray-700 px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-1 text-gray-600 dark:text-gray-300">
+                  <button onClick={() => loadStats(c.id)} className="text-[11px] bg-slate-100 dark:bg-navy-700 px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-1 text-slate-600 dark:text-gray-300">
                     <BarChart3 size={12} />
                     {st === "loading" ? "..." : st ? (st.count < 0 ? "خطأ" : `مبيعات الكورس: ${st.count}`) : "المبيعات"}
                   </button>
-                  <button onClick={() => recount(c.id)} className="text-[11px] bg-gray-100 dark:bg-gray-700 px-2.5 py-1.5 rounded-lg font-bold text-gray-600 dark:text-gray-300" title="إعادة حساب عدد المحاضرات من المصدر">
+                  <button onClick={() => recount(c.id)} className="text-[11px] bg-slate-100 dark:bg-navy-700 px-2.5 py-1.5 rounded-lg font-bold text-slate-600 dark:text-gray-300" title="إعادة حساب عدد المحاضرات من المصدر">
                     إعادة عدّ ⟳
                   </button>
                   <button onClick={() => remove(c)} className="text-[11px] bg-red-50 dark:bg-red-900/20 text-red-500 px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-1">
@@ -380,29 +380,29 @@ export default function CoursesManager() {
                 </div>
 
                 {expanded && (
-                  <div className="border-t dark:border-gray-700 pt-2 space-y-1.5">
+                  <div className="border-t dark:border-navy-700 pt-2 space-y-1.5">
                     {courseLectures.length === 0 && (
-                      <p className="text-xs text-gray-400 py-2">مفيش محاضرات مربوطة لسه — اربط من القايمة تحت، أو اعمل محاضرة جديدة من تبويب «المحاضرات 🎬» واختار الكورس ده فيها.</p>
+                      <p className="text-xs text-slate-400 py-2">مفيش محاضرات مربوطة لسه — اربط من القايمة تحت، أو اعمل محاضرة جديدة من تبويب «المحاضرات 🎬» واختار الكورس ده فيها.</p>
                     )}
                     {courseLectures.map((l, i) => (
-                      <div key={l.id} className="flex items-center gap-2 text-xs bg-gray-50 dark:bg-gray-700/40 rounded-lg px-2.5 py-2">
-                        <span className="text-gray-400 font-mono w-5 text-center">{i + 1}</span>
+                      <div key={l.id} className="flex items-center gap-2 text-xs bg-slate-50 dark:bg-navy-700/40 rounded-lg px-2.5 py-2">
+                        <span className="text-slate-400 font-mono w-5 text-center">{i + 1}</span>
                         <p className="font-bold flex-1 truncate">{l.title}</p>
-                        <span className="text-gray-400">{l.priceEgp > 0 ? `${l.priceEgp} ج.م` : "مجاني"}</span>
-                        <button onClick={() => move(c, l.id, "up")} disabled={i === 0} className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-25" title="طلّع"><ChevronUp size={14} /></button>
-                        <button onClick={() => move(c, l.id, "down")} disabled={i === courseLectures.length - 1} className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-25" title="نزّل"><ChevronDown size={14} /></button>
-                        <button onClick={() => detach(c, l.id)} className="p-1 rounded text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20" title="فك الربط (المحاضرة مش بتتمسح — بتفضل لوحدها)"><Unlink size={14} /></button>
+                        <span className="text-slate-400">{l.priceEgp > 0 ? `${l.priceEgp} ج.م` : "مجاني"}</span>
+                        <button onClick={() => move(c, l.id, "up")} disabled={i === 0} className="p-1 rounded hover:bg-slate-200 dark:hover:bg-navy-600 disabled:opacity-25" title="طلّع"><ChevronUp size={14} /></button>
+                        <button onClick={() => move(c, l.id, "down")} disabled={i === courseLectures.length - 1} className="p-1 rounded hover:bg-slate-200 dark:hover:bg-navy-600 disabled:opacity-25" title="نزّل"><ChevronDown size={14} /></button>
+                        <button onClick={() => detach(c, l.id)} className="p-1 rounded text-accent-600 hover:bg-accent-50 dark:hover:bg-amber-900/20" title="فك الربط (المحاضرة مش بتتمسح — بتفضل لوحدها)"><Unlink size={14} /></button>
                       </div>
                     ))}
                     {unassigned.length > 0 && (
                       <div className="flex items-center gap-2 pt-1">
-                        <select value={attachPick} onChange={(e) => setAttachPick(e.target.value)} className="flex-1 p-2 rounded-lg border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-xs">
+                        <select value={attachPick} onChange={(e) => setAttachPick(e.target.value)} className="flex-1 p-2 rounded-lg border dark:border-navy-600 bg-slate-50 dark:bg-navy-700 text-xs">
                           <option value="">اربط محاضرة موجودة ({unassigned.length} بدون كورس)...</option>
                           {unassigned.map((l) => (
                             <option key={l.id} value={l.id}>{l.title} — {l.subjectName}{l.priceEgp > 0 ? ` (${l.priceEgp}ج)` : " (مجاني)"}</option>
                           ))}
                         </select>
-                        <button onClick={() => attach(c)} disabled={!attachPick} className="text-xs bg-violet-600 disabled:opacity-40 text-white font-bold px-3 py-2 rounded-lg flex items-center gap-1">
+                        <button onClick={() => attach(c)} disabled={!attachPick} className="text-xs bg-brand-600 disabled:opacity-40 text-white font-bold px-3 py-2 rounded-lg flex items-center gap-1">
                           <Link2 size={12} /> اربط
                         </button>
                       </div>
